@@ -15,8 +15,25 @@ import com.gmail.at.faint545.Remote;
 
 public class RemoteFragment extends ListFragment {
 	private ControllerListAdapter mAdapter;
-	private ArrayList<Remote> mData = new ArrayList<Remote>();
 
+	public static RemoteFragment newInstance(ArrayList<Remote> remotes) {
+		RemoteFragment self = new RemoteFragment();
+		
+		Bundle args = new Bundle();
+		args.putParcelableArrayList("remotes", remotes);
+		
+		self.setArguments(args);
+		return self;
+	}
+	
+	private ArrayList<Remote> getRemotes() {
+		Object result = getArguments().get("remotes");
+		if(result instanceof ArrayList<?>) {
+			return (ArrayList<Remote>) result;
+		}
+		else return null;
+	}
+	
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {		
 		return inflater.inflate(R.layout.remote_layout, null);
@@ -24,15 +41,9 @@ public class RemoteFragment extends ListFragment {
 
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
-		setupTestData();
 		getListView().setCacheColorHint(Color.TRANSPARENT);
-		mAdapter = new ControllerListAdapter(getActivity(), R.layout.remote_layout_row, mData);
+		mAdapter = new ControllerListAdapter(getActivity(), R.layout.remote_layout_row, getRemotes());
 		setListAdapter(mAdapter);
 		super.onActivityCreated(savedInstanceState);
-	}
-
-	private void setupTestData() {		
-		mData.add(new Remote("Remote1").setAddress("aptaccess.dyndns.org").setPort("8081"));
-		mData.add(new Remote("Remote2").setAddress("faint.kicks-ass.net").setPort("8081"));
 	}
 }
