@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>    
+    <style name="Theme.SABActionBar" parent="@style/Theme.Sherlock">
+        <item name="abBackground">@drawable/ab_background</item>
+    </style>
+</resources>
