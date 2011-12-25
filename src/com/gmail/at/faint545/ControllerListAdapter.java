@@ -28,11 +28,11 @@ public class ControllerListAdapter extends ArrayAdapter<Remote> {
 			convertView = inflater.inflate(resourceId, null);
 		}
 		
-		if(position%2 != 0) {
-			convertView.setBackgroundResource(R.color.gray_background);
+		if(position%2 == 0) {
+			convertView.setBackgroundResource(R.drawable.remote_listview_selector_odd);
 		}
 		else {
-			convertView.setBackgroundResource(R.color.lightgray_background);
+			convertView.setBackgroundResource(R.drawable.remote_listview_selector_even);
 		}
 		
 		TextView name = (TextView) convertView.findViewById(R.id.remote_layout_row_name);

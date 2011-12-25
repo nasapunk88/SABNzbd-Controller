@@ -145,4 +145,8 @@ public class NewRemoteFragment extends Fragment {
 		
 		saveRemote.setEnabled(false); // Disable button by default
 	}
+	
+	public void populateApiKey(String apiKey) {
+		apiKeyEditText.setText(apiKey);
+	}
 }

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">SABNzbd Controller</string>
-    <string name="empty_remote_listview">No Remotes Found! Click To Add</string>
+    <string name="empty_remote_listview">No remotes found! Click the button below to add a new one.</string>
     <string name="nickname_label">Nickname</string>
     <string name="nickname_hint">MyRemote</string>
     <string name="address_port_label">Address/Port</string>
@@ -9,6 +9,8 @@
     <string name="port_hint">8081</string>
     <string name="apikey_hint">eef2fe131a6e6</string>
     <string name="apikey_label">API Key</string>
-    <string name="new_remote_save_button">Save</string>
+    <string name="save_remote_button_text">Save</string>
+    <string name="add_remote_button_text">Add Remote</string>
+    <string name="qr_button_text">QR</string>
 
 </resources>

@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="gray_background">#d0d0d0</color>
+    <color name="main_background">#d0d0d0</color>
     <color name="black">#000000</color>
     <color name="yellow">#fee50b</color>
     <color name="transparent">#00000000</color>
-    <color name="lightgray_background">#e0e0e0</color>
+    <color name="remote_listview_background_even">#e0e0e0</color>
+    <color name="remote_listview_background_odd">#C4C4C4</color>
     
 </resources>
