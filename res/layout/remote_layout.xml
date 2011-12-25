@@ -30,9 +30,9 @@
         android:layout_height="wrap_content"
         android:padding="6dp">
 		    <Button 
+		        android:id="@+id/remote_layout_add_remote"
 		        android:layout_width="match_parent"
 		        android:layout_height="wrap_content"
-		        android:text="@string/add_remote_button_text"
-		        android:onClick="launchNewRemoteFragment"/>
+		        android:text="@string/add_remote_button_text"/>
     </LinearLayout>
 </LinearLayout>

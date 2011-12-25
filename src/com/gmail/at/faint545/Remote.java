@@ -4,14 +4,10 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 public class Remote implements Parcelable {
-	private String name,address,port,apiKey;
+	private String name,address,port,apiKey,id;
 
 	public Remote(String name) {
 		this.name = name;
-	}
-	
-	public String getName() {
-		return name;
 	}
 	
 	public Remote setAddress(String address) {
@@ -23,16 +19,41 @@ public class Remote implements Parcelable {
 		this.port = port;
 		return this;
 	}
+
+	public Remote setApiKey(String apiKey) {
+		this.apiKey = apiKey;
+		return this;
+	}
+	
+	public Remote setId(String id) {
+		this.id = id;
+		return this;
+	}
+	
+	public String getName() {
+		return name;
+	}
+	
+	public String getApiKey() {
+		return apiKey;
+	}
+	
+	public String getAddress() {
+		return address;
+	}
+	
+	public String getPort() {
+		return port;
+	}
 	
 	public String getHost() {
 		StringBuilder hostname = new StringBuilder();
 		hostname.append(address).append(":").append(port);
 		return hostname.toString();
 	}
-
-	public Remote setApiKey(String apiKey) {
-		this.apiKey = apiKey;
-		return this;
+	
+	public String getId() {
+		return id;
 	}
 
 	public Remote(Parcel source) {
@@ -65,6 +86,7 @@ public class Remote implements Parcelable {
 		dest.writeString(address);
 		dest.writeString(port);
 		dest.writeString(apiKey);
+		dest.writeString(id);
 	}
 	
 	/*
@@ -77,5 +99,6 @@ public class Remote implements Parcelable {
 		address = source.readString();
 		port = source.readString();
 		apiKey = source.readString();
+		id = source.readString();
 	}	
 }

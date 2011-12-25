@@ -14,15 +14,21 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.gmail.at.faint545.R;
+import com.gmail.at.faint545.Remote;
 import com.gmail.at.faint545.databases.RemoteDatabase;
 
 public class NewRemoteFragment extends Fragment {
 	private EditText nickEditText, addressEditText, portEditText, apiKeyEditText;
 	private Button saveRemote;
 	private NewRemoteListener remoteListener;
+	private Remote mRemote;
 	
 	public interface NewRemoteListener {
 		public void onRemoteSaved();
+	}
+	
+	public NewRemoteFragment(Remote remote) {
+		mRemote = remote;
 	}
 	
 	@Override
@@ -40,8 +46,18 @@ public class NewRemoteFragment extends Fragment {
 	public void onActivityCreated(Bundle savedInstanceState) {
 		setRetainInstance(true);
 		setupViews();
+		if(mRemote != null) populateViews();
 		initListeners();
 		super.onActivityCreated(savedInstanceState);
+	}
+
+	private void populateViews() {
+		nickEditText.setText(mRemote.getName());
+		addressEditText.setText(mRemote.getAddress());
+		portEditText.setText(mRemote.getPort());
+		apiKeyEditText.setText(mRemote.getApiKey());
+		
+		saveRemote.setEnabled(true);
 	}
 
 	private void initListeners() {
@@ -124,7 +140,13 @@ public class NewRemoteFragment extends Fragment {
 	private void saveToDatabase(String nickname, String address, String port, String apiKey) {
 		RemoteDatabase database = new RemoteDatabase(getActivity());
 		database.open();
-		long result = database.insert(nickname, address, port, apiKey);
+		long result;
+		if(mRemote != null) {
+			result = database.update(Integer.parseInt(mRemote.getId()), nickname, address, port, apiKey);
+		}
+		else {
+			result = database.insert(nickname, address, port, apiKey);
+		}
 		if(result != -1) {
 			database.close();
 			Toast.makeText(getActivity(), "Save successful!", Toast.LENGTH_SHORT).show();
