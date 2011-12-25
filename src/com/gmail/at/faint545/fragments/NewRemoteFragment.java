@@ -55,9 +55,7 @@ public class NewRemoteFragment extends Fragment {
 		nickEditText.setText(mRemote.getName());
 		addressEditText.setText(mRemote.getAddress());
 		portEditText.setText(mRemote.getPort());
-		apiKeyEditText.setText(mRemote.getApiKey());
-		
-		saveRemote.setEnabled(true);
+		apiKeyEditText.setText(mRemote.getApiKey());	
 	}
 
 	private void initListeners() {

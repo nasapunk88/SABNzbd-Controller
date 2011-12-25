@@ -110,7 +110,7 @@ public class ControllerActivity extends FragmentActivity implements NewRemoteLis
 	@Override
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
 		IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
-		if(result != null) {
+		if(result != null && result.getContents() != null) {
 			newRemoteFragment.populateApiKey(result.getContents());
 		}
 		super.onActivityResult(requestCode, resultCode, data);
