@@ -28,8 +28,16 @@ public class ControllerListAdapter extends ArrayAdapter<Remote> {
 			convertView = inflater.inflate(resourceId, null);
 		}
 		
+		if(position%2 != 0) {
+			convertView.setBackgroundResource(R.color.gray_background);
+		}
+		else {
+			convertView.setBackgroundResource(R.color.lightgray_background);
+		}
+		
 		TextView name = (TextView) convertView.findViewById(R.id.remote_layout_row_name);
 		TextView host = (TextView) convertView.findViewById(R.id.remote_layout_row_host);
+				
 		
 		if(remotes.size() > 0) {
 			Remote remote = remotes.get(position);

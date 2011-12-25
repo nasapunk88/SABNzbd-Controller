@@ -2,5 +2,13 @@
 <resources>
     <string name="app_name">SABNzbd Controller</string>
     <string name="empty_remote_listview">No Remotes Found! Click To Add</string>
+    <string name="nickname_label">Nickname</string>
+    <string name="nickname_hint">MyRemote</string>
+    <string name="address_port_label">Address/Port</string>
+    <string name="address_hint">localhost</string>
+    <string name="port_hint">8081</string>
+    <string name="apikey_hint">eef2fe131a6e6</string>
+    <string name="apikey_label">API Key</string>
+    <string name="new_remote_save_button">Save</string>
 
 </resources>
