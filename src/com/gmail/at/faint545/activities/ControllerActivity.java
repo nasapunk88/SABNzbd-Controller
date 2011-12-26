@@ -8,7 +8,6 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
-import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
@@ -71,6 +70,10 @@ public class ControllerActivity extends FragmentActivity implements NewRemoteLis
 		getSupportFragmentManager().beginTransaction().add(R.id.main_framelayout, newFragment).commit();
 	}
 	
+	/*
+	 * This function is called when a user edits a remote or
+	 * creates a new one.
+	 */
 	public void launchNewRemoteFragment(Remote remote) {
 		FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
 				

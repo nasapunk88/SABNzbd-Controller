@@ -1,6 +1,11 @@
-package com.gmail.at.faint545;
+package com.gmail.at.faint545.fragments;
 
 import java.util.ArrayList;
+
+import com.gmail.at.faint545.R;
+import com.gmail.at.faint545.Remote;
+import com.gmail.at.faint545.R.drawable;
+import com.gmail.at.faint545.R.id;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -9,12 +14,12 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-public class ControllerListAdapter extends ArrayAdapter<Remote> {
+public class RemoteFragmentAdapter extends ArrayAdapter<Remote> {
 	private ArrayList<Remote> remotes;
 	private Context mContext;
 	private int resourceId;
 
-	public ControllerListAdapter(Context context, int resourceId, ArrayList<Remote> objects) {
+	public RemoteFragmentAdapter(Context context, int resourceId, ArrayList<Remote> objects) {
 		super(context, resourceId, objects);
 		this.resourceId = resourceId;
 		mContext = context;

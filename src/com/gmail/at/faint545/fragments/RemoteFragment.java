@@ -2,6 +2,7 @@ package com.gmail.at.faint545.fragments;
 
 import java.util.ArrayList;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
@@ -16,20 +17,24 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.Button;
+import android.widget.ListView;
 
-import com.gmail.at.faint545.ControllerListAdapter;
 import com.gmail.at.faint545.R;
 import com.gmail.at.faint545.Remote;
+import com.gmail.at.faint545.activities.RemoteDetailsActivity;
 import com.gmail.at.faint545.databases.RemoteDatabase;
 
 public class RemoteFragment extends ListFragment {
-	private ControllerListAdapter mAdapter;
+	private RemoteFragmentAdapter mAdapter;
 	private RemoteFragmentListener mListener;
 	
 	private Button addRemote;
 	
 	public static final int EDIT_REMOTE = 0x88, DELETE_REMOTE = EDIT_REMOTE >> 2;
 
+	/*
+	 * Callback functions for this class
+	 */
 	public interface RemoteFragmentListener {
 		public void onEditRemote(int position);
 		public void onDeleteRemote(int position);
@@ -60,7 +65,7 @@ public class RemoteFragment extends ListFragment {
 	
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {		
-		return inflater.inflate(R.layout.remote_layout, null);
+		return inflater.inflate(R.layout.remote, null);
 	}
 
 	@Override
@@ -71,37 +76,7 @@ public class RemoteFragment extends ListFragment {
 		setupListAdapter();
 		super.onActivityCreated(savedInstanceState);
 	}
-
-	private void setupListAdapter() {
-		mAdapter = new ControllerListAdapter(getActivity(), R.layout.remote_layout_row, getRemotes());
-		setListAdapter(mAdapter);
-	}
 	
-	private void initViews() {
-		addRemote = (Button) getView().findViewById(R.id.remote_layout_add_remote);
-		
-		addRemote.setOnClickListener(new OnClickListener() {
-			
-			@Override
-			public void onClick(View v) {
-				mListener.onAddRemoteClicked();
-			}
-		});
-	}
-
-	@SuppressWarnings("unchecked")
-	private ArrayList<Remote> getRemotes() {
-		Object result = getArguments().get("remotes");
-		if(result instanceof ArrayList<?>) {
-			return (ArrayList<Remote>) result;
-		}
-		else return null;
-	}
-	
-	public void notifyDataSetChanged() {
-		mAdapter.notifyDataSetChanged();
-	}
-
 	@Override
 	public void onCreateContextMenu(ContextMenu menu, View v,ContextMenuInfo menuInfo) {
 		menu.add(Menu.NONE, EDIT_REMOTE, Menu.NONE, "Edit");
@@ -121,5 +96,38 @@ public class RemoteFragment extends ListFragment {
 			break;
 		}
 		return super.onContextItemSelected(item);
+	}
+
+	@Override
+	public void onListItemClick(ListView l, View v, int position, long id) {
+		startActivity(new Intent(getActivity(), RemoteDetailsActivity.class));
+		super.onListItemClick(l, v, position, id);
+	}
+
+	private void setupListAdapter() {
+		mAdapter = new RemoteFragmentAdapter(getActivity(), R.layout.remote_row, getRemotes());
+		setListAdapter(mAdapter);
+	}
+	
+	private void initViews() {
+		addRemote = (Button) getView().findViewById(R.id.remote_layout_add_remote);
+		
+		addRemote.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				mListener.onAddRemoteClicked();
+			}
+		});
+	}
+
+	@SuppressWarnings("unchecked")
+	private ArrayList<Remote> getRemotes() {
+		Object result = getArguments().get("remotes");
+		return (ArrayList<Remote>) result;
+	}
+	
+	public void notifyDataSetChanged() {
+		mAdapter.notifyDataSetChanged();
 	}
 }
