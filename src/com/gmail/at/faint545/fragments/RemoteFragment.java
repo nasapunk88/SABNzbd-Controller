@@ -73,7 +73,7 @@ public class RemoteFragment extends ListFragment {
 	public void onActivityCreated(Bundle savedInstanceState) {
 		initViews();
 		registerForContextMenu(getListView()); // Register this ListView to show a context menu		
-		getListView().setCacheColorHint(Color.TRANSPARENT); // Optimization for ListView
+		getListView().setCacheColorHint(getActivity().getResources().getColor(R.color.main_background)); // Optimization for ListView
 		setupListAdapter();
 		super.onActivityCreated(savedInstanceState);
 	}

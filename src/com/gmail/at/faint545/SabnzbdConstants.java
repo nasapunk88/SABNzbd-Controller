@@ -12,13 +12,18 @@ public interface SabnzbdConstants {
 							   MODE_RESTART = "restart",
 							   MODE_PAUSE = "pause",
 							   MODE_RESUME = "resume",
-							   MODE_SHUTDOWN = "shutdown";
+							   MODE_SHUTDOWN = "shutdown",
+							   STATUS_COMPLETED = "Completed",
+							   STATUS_FAILED = "Failed";
 	
 	public final static String OUTPUT = "output",
 							   MODE = "mode",
 							   APIKEY = "apikey",
 							   JOBS = "jobs",
 							   FILENAME = "filename",
+							   NAME = "name",
 							   MBLEFT = "mbleft",
-							   MB = "mb";
+							   MB = "mb",
+							   SLOTS = "slots",
+							   STATUS = "status";
 }

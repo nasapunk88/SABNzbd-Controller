@@ -16,6 +16,8 @@ import android.view.View;
 import android.widget.TabHost;
 import android.widget.TabHost.OnTabChangeListener;
 
+import com.gmail.at.faint545.HistoryDownloadTask;
+import com.gmail.at.faint545.HistoryDownloadTask.HistoryDownloadTaskListener;
 import com.gmail.at.faint545.QueueDownloadTask;
 import com.gmail.at.faint545.QueueDownloadTask.DataDownloadTaskListener;
 import com.gmail.at.faint545.R;
@@ -23,12 +25,14 @@ import com.gmail.at.faint545.Remote;
 import com.gmail.at.faint545.fragments.RemoteHistoryFragment;
 import com.gmail.at.faint545.fragments.RemoteQueueFragment;
 
-public class RemoteDetailsActivity extends FragmentActivity implements DataDownloadTaskListener {
+public class RemoteDetailsActivity extends FragmentActivity implements DataDownloadTaskListener,HistoryDownloadTaskListener {
 	private TabHost mTabHost;
 	private ViewPager mViewPager;
 	private TabsAdapter mTabsAdapter;
 	private Remote mRemote;
 	private QueueDownloadTask queueDownload;
+	private HistoryDownloadTask historyDownload;
+	
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -41,7 +45,9 @@ public class RemoteDetailsActivity extends FragmentActivity implements DataDownl
 
 	private void downloadData() {
 		queueDownload = new QueueDownloadTask(this, mRemote.buildURL(),mRemote.getApiKey());
+		historyDownload = new HistoryDownloadTask(this, mRemote.buildURL(), mRemote.getApiKey());
 		queueDownload.execute();
+		historyDownload.execute();
 	}
 
 	private void setupTabs() {
@@ -144,6 +150,19 @@ public class RemoteDetailsActivity extends FragmentActivity implements DataDownl
 			mTabsAdapter.getItem(0).setArguments(arguments);
 		}
 	}
+	
+	@Override
+	public void onHistoryDownloadFinished(String result) {
+		historyDownload = null;
+		if(result == null) {
+			showAlertDialog();
+		}
+		else {
+			Bundle arguments = new Bundle();
+			arguments.putString("data", result);
+			mTabsAdapter.getItem(1).setArguments(arguments);
+		}
+	}	
 
 	private void showAlertDialog() {
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);

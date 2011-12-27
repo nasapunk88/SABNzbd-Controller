@@ -13,9 +13,7 @@
     <string name="add_remote_button_text">Add Remote</string>
     <string name="qr_button_text">QR</string>
     <string name="empty_remote_queue">No downloads in the queue!</string>
-    <string name="remote_queue_pause_all">Pause ALL Downloads</string>
     <string name="empty_remote_history">Your history is empty!</string>
-    <string name="remote_history_delete_all">Delete ALL History</string>
     <string name="queue_tab_title">QUEUE</string>
     <string name="history_tab_title">HISTORY</string>
     <string name="divide"> / </string>

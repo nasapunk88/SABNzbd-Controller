@@ -7,5 +7,7 @@
     <color name="remote_listview_background_even">#e0e0e0</color>
     <color name="remote_listview_background_odd">#C4C4C4</color>
     <color name="white">#ffffff</color>
+    <color name="light_red">#F05656</color>
+    <color name="lime_green">#94F056</color>
     
 </resources>
