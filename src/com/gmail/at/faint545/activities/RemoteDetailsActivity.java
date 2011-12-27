@@ -2,7 +2,9 @@ package com.gmail.at.faint545.activities;
 
 import java.util.ArrayList;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
@@ -14,20 +16,32 @@ import android.view.View;
 import android.widget.TabHost;
 import android.widget.TabHost.OnTabChangeListener;
 
+import com.gmail.at.faint545.QueueDownloadTask;
+import com.gmail.at.faint545.QueueDownloadTask.DataDownloadTaskListener;
 import com.gmail.at.faint545.R;
+import com.gmail.at.faint545.Remote;
 import com.gmail.at.faint545.fragments.RemoteHistoryFragment;
 import com.gmail.at.faint545.fragments.RemoteQueueFragment;
 
-public class RemoteDetailsActivity extends FragmentActivity {
+public class RemoteDetailsActivity extends FragmentActivity implements DataDownloadTaskListener {
 	private TabHost mTabHost;
 	private ViewPager mViewPager;
 	private TabsAdapter mTabsAdapter;
+	private Remote mRemote;
+	private QueueDownloadTask queueDownload;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		setContentView(R.layout.remote_details);
+		mRemote = (Remote) getIntent().getParcelableExtra("selected_remote");
+		downloadData(); // Begin downloading history & queue
+		setContentView(R.layout.remote_details);		
 		setupTabs();		
 		super.onCreate(savedInstanceState);
+	}
+
+	private void downloadData() {
+		queueDownload = new QueueDownloadTask(this, mRemote.buildURL(),mRemote.getApiKey());
+		queueDownload.execute();
 	}
 
 	private void setupTabs() {
@@ -40,18 +54,18 @@ public class RemoteDetailsActivity extends FragmentActivity {
 		View queueIndicator = getLayoutInflater().inflate(R.layout.queue_tab_indicator, null);
 		View historyIndicator = getLayoutInflater().inflate(R.layout.history_tab_indicator, null);
 		
-		mTabsAdapter.add(mTabHost.newTabSpec("queue").setIndicator(queueIndicator),RemoteQueueFragment.class,null);
-		mTabsAdapter.add(mTabHost.newTabSpec("history").setIndicator(historyIndicator),RemoteHistoryFragment.class,null);
+		mTabsAdapter.add(mTabHost.newTabSpec("queue").setIndicator(queueIndicator),new RemoteQueueFragment(),null);
+		mTabsAdapter.add(mTabHost.newTabSpec("history").setIndicator(historyIndicator),new RemoteHistoryFragment(),null);
 	}
 	
-	/////////////////////////////////////
-	// Tabs adapter subclass
-	////////////////////////////////////	
+	/**************************
+	 * Tabs adapter subclass
+	 **************************/	
 	public static class TabsAdapter extends FragmentPagerAdapter implements OnTabChangeListener, OnPageChangeListener {
 		private final Context mContext;
 		private final TabHost mTabHost;
 		private final ViewPager mViewPager;
-		private final ArrayList<String> mTabs = new ArrayList<String>();
+		private final ArrayList<Fragment> mTabs = new ArrayList<Fragment>();
 		
 		static class DummyTabFactory implements TabHost.TabContentFactory {
 			private final Context mContext;
@@ -79,18 +93,20 @@ public class RemoteDetailsActivity extends FragmentActivity {
 			mViewPager.setOnPageChangeListener(this);
 		}
 		
-		public void add(TabHost.TabSpec tabSpec,Class<?> clss, Bundle args) {
+		public void add(TabHost.TabSpec tabSpec,Fragment fragment, Bundle args) {
 			tabSpec.setContent(new DummyTabFactory(mContext));
 			
-			mTabs.add(clss.getName());
+			mTabs.add(fragment);
 			mTabHost.addTab(tabSpec);
 			notifyDataSetChanged();
 		}
 
 		@Override
 		public Fragment getItem(int position) {
-			Log.d("FOLLOW ME","getItem() " + mTabs.get(position));
-			return Fragment.instantiate(mContext, mTabs.get(position),null);
+			if(mTabs.get(position) != null) {
+				return mTabs.get(position);
+			}
+			else return null;
 		}
 
 		@Override
@@ -110,6 +126,42 @@ public class RemoteDetailsActivity extends FragmentActivity {
 		public void onPageScrollStateChanged(int state) {}
 
 		@Override
-		public void onTabChanged(String arg0) {}
+		public void onTabChanged(String tag) {
+			int position = mTabHost.getCurrentTab();
+			mViewPager.setCurrentItem(position);
+		}
+	}
+
+	@Override
+	public void onQueueDownloadFinished(String result) {
+		queueDownload = null;
+		if(result == null) {
+			showAlertDialog();
+		}
+		else {
+			Bundle arguments = new Bundle();
+			arguments.putString("data", result);			
+			mTabsAdapter.getItem(0).setArguments(arguments);
+		}
+	}
+
+	private void showAlertDialog() {
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setMessage("There was an error. Please check your connection and try again.");
+		builder.setCancelable(false);
+		builder.setPositiveButton("Try Again", new DialogInterface.OnClickListener() {				
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				downloadData();
+			}
+		});
+		builder.setNegativeButton("OK", new DialogInterface.OnClickListener() {
+			
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				finish();
+			}
+		});			
+		builder.create().show();
 	}
 }

@@ -48,13 +48,22 @@ public class Remote implements Parcelable {
 	
 	public String getHost() {
 		StringBuilder hostname = new StringBuilder();
-		hostname.append(address).append(":").append(port);
+		hostname.append("http://").append(address).append(":").append(port);
 		return hostname.toString();
 	}
 	
 	public String getId() {
 		return id;
 	}
+	
+	public String buildURL() {
+		//http://localhost:8080/api?apikey=
+		return getHost() + "/" + "api?";
+	}
+	
+	/*
+	 * Below here is for Parcelable
+	 */
 
 	public Remote(Parcel source) {
 		readFromParcel(source);

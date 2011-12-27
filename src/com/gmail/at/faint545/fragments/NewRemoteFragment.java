@@ -44,7 +44,6 @@ public class NewRemoteFragment extends Fragment {
 
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
-		setRetainInstance(true);
 		setupViews();
 		if(mRemote != null) populateViews();
 		initListeners();

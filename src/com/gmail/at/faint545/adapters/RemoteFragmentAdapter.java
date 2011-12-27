@@ -1,4 +1,4 @@
-package com.gmail.at.faint545.fragments;
+package com.gmail.at.faint545.adapters;
 
 import java.util.ArrayList;
 

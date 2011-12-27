@@ -18,5 +18,6 @@
     <string name="remote_history_delete_all">Delete ALL History</string>
     <string name="queue_tab_title">QUEUE</string>
     <string name="history_tab_title">HISTORY</string>
+    <string name="divide"> / </string>
 
 </resources>

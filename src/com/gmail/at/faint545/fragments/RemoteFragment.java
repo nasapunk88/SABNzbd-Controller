@@ -22,6 +22,7 @@ import android.widget.ListView;
 import com.gmail.at.faint545.R;
 import com.gmail.at.faint545.Remote;
 import com.gmail.at.faint545.activities.RemoteDetailsActivity;
+import com.gmail.at.faint545.adapters.RemoteFragmentAdapter;
 import com.gmail.at.faint545.databases.RemoteDatabase;
 
 public class RemoteFragment extends ListFragment {
@@ -32,9 +33,9 @@ public class RemoteFragment extends ListFragment {
 	
 	public static final int EDIT_REMOTE = 0x88, DELETE_REMOTE = EDIT_REMOTE >> 2;
 
-	/*
+	/**************************************
 	 * Callback functions for this class
-	 */
+	 **************************************/
 	public interface RemoteFragmentListener {
 		public void onEditRemote(int position);
 		public void onDeleteRemote(int position);
@@ -100,7 +101,9 @@ public class RemoteFragment extends ListFragment {
 
 	@Override
 	public void onListItemClick(ListView l, View v, int position, long id) {
-		startActivity(new Intent(getActivity(), RemoteDetailsActivity.class));
+		Intent detailsIntent = new Intent(getActivity(), RemoteDetailsActivity.class);
+		detailsIntent.putExtra("selected_remote", getRemotes().get(position));
+		startActivity(detailsIntent);
 		super.onListItemClick(l, v, position, id);
 	}
 

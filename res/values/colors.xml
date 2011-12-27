@@ -6,5 +6,6 @@
     <color name="transparent">#00000000</color>
     <color name="remote_listview_background_even">#e0e0e0</color>
     <color name="remote_listview_background_odd">#C4C4C4</color>
+    <color name="white">#ffffff</color>
     
 </resources>
