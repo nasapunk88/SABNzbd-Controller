@@ -11,6 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.CheckBox;
 import android.widget.TextView;
 
 import com.gmail.at.faint545.R;
@@ -21,6 +22,7 @@ public class RemoteHistoryAdapter extends ArrayAdapter<JSONObject> {
 	private Context mContext;
 	private int resourceID;
 	private ArrayList<JSONObject> oldJobs;
+	private CheckBox isChecked;
 
 	public RemoteHistoryAdapter(Context context, int resourceID, ArrayList<JSONObject> objects) {
 		super(context, resourceID, objects);
@@ -36,6 +38,8 @@ public class RemoteHistoryAdapter extends ArrayAdapter<JSONObject> {
 		}
 		
 		initViews(convertView);
+		
+		isChecked.setChecked(false);
 		
 		JSONObject oldJob = oldJobs.get(position);
 		String jobStatus = null, jobName = null;
@@ -55,5 +59,6 @@ public class RemoteHistoryAdapter extends ArrayAdapter<JSONObject> {
 	private void initViews(View convertView) {		
 		name = (TextView) convertView.findViewById(R.id.remote_history_row_filename);
 		status = (TextView) convertView.findViewById(R.id.remote_history_row_status);
+		isChecked = (CheckBox) convertView.findViewById(R.id.remote_history_checkbox);
 	}
 }

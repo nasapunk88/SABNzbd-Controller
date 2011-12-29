@@ -2,6 +2,9 @@ package com.gmail.at.faint545.activities;
 
 import java.util.ArrayList;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -9,33 +12,36 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.view.Menu;
 import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
 import android.util.Log;
 import android.view.View;
 import android.widget.TabHost;
+import android.widget.Toast;
 import android.widget.TabHost.OnTabChangeListener;
 
+import com.gmail.at.faint545.DeleteHistoryTask;
+import com.gmail.at.faint545.DeleteHistoryTask.HistoryDeleteTaskListener;
 import com.gmail.at.faint545.HistoryDownloadTask;
 import com.gmail.at.faint545.HistoryDownloadTask.HistoryDownloadTaskListener;
 import com.gmail.at.faint545.QueueDownloadTask;
 import com.gmail.at.faint545.QueueDownloadTask.DataDownloadTaskListener;
 import com.gmail.at.faint545.R;
 import com.gmail.at.faint545.Remote;
+import com.gmail.at.faint545.SabnzbdConstants;
 import com.gmail.at.faint545.fragments.RemoteHistoryFragment;
+import com.gmail.at.faint545.fragments.RemoteHistoryFragment.RemoteHistoryListener;
 import com.gmail.at.faint545.fragments.RemoteQueueFragment;
 
-public class RemoteDetailsActivity extends FragmentActivity implements DataDownloadTaskListener,HistoryDownloadTaskListener {
+public class RemoteDetailsActivity extends FragmentActivity implements DataDownloadTaskListener,HistoryDownloadTaskListener,RemoteHistoryListener,HistoryDeleteTaskListener {
 	private TabHost mTabHost;
 	private ViewPager mViewPager;
 	private TabsAdapter mTabsAdapter;
 	private Remote mRemote;
-	private QueueDownloadTask queueDownload;
-	private HistoryDownloadTask historyDownload;
 	private AlertDialog errorDialog;
 	
-	public final static int HISTORY_DELETE_ALL = 0x123, HISTORY_DELETE_SELECTED = HISTORY_DELETE_ALL >> 1;
+	public final static int HISTORY_DELETE_ALL = 0x123, HISTORY_DELETE_SELECTED = HISTORY_DELETE_ALL >> 1,
+							QUEUE_PAUSE_ALL = HISTORY_DELETE_ALL >> 1, QUEUE_PAUSE_SELECTED = QUEUE_PAUSE_ALL >> 1;	
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -51,11 +57,17 @@ public class RemoteDetailsActivity extends FragmentActivity implements DataDownl
 	 * the queue and history
 	 */
 	private void downloadData() {
-		queueDownload = new QueueDownloadTask(this, mRemote.buildURL(),mRemote.getApiKey());
-		historyDownload = new HistoryDownloadTask(this, mRemote.buildURL(), mRemote.getApiKey());
-		queueDownload.execute();
-		historyDownload.execute();
+		downloadQueue();
+		downloadHistory();
 		errorDialog = buildAlertDialog();
+	}
+	
+	private void downloadQueue() {
+		new QueueDownloadTask(this, mRemote.buildURL(),mRemote.getApiKey()).execute();
+	}
+	
+	private void downloadHistory() {
+		new HistoryDownloadTask(this, mRemote.buildURL(), mRemote.getApiKey()).execute();
 	}
 
 	/*
@@ -73,20 +85,6 @@ public class RemoteDetailsActivity extends FragmentActivity implements DataDownl
 		
 		mTabsAdapter.add(mTabHost.newTabSpec("queue").setIndicator(queueIndicator),new RemoteQueueFragment(),null);
 		mTabsAdapter.add(mTabHost.newTabSpec("history").setIndicator(historyIndicator),new RemoteHistoryFragment(),null);
-	}
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		if(mTabHost != null) {
-			String tag = mTabHost.getCurrentTabTag();
-			if(tag.equalsIgnoreCase("queue")) {
-				menu.add("Pause all");
-			}
-			else if(tag.equalsIgnoreCase("history")) {
-				menu.add("Delete all");
-			}
-		}
-		return super.onCreateOptionsMenu(menu);
 	}
 
 	/*
@@ -170,7 +168,7 @@ public class RemoteDetailsActivity extends FragmentActivity implements DataDownl
 	 */
 	@Override
 	public void onQueueDownloadFinished(String result) {
-		queueDownload = null;
+		//queueDownload = null;
 		if(result == null) {
 			if(!errorDialog.isShowing()) {
 				errorDialog.show();
@@ -188,7 +186,7 @@ public class RemoteDetailsActivity extends FragmentActivity implements DataDownl
 	 */
 	@Override
 	public void onHistoryDownloadFinished(String result) {
-		historyDownload = null;
+		//historyDownload = null;
 		if(result == null) {
 			if(!errorDialog.isShowing()) {
 				errorDialog.show();
@@ -222,5 +220,31 @@ public class RemoteDetailsActivity extends FragmentActivity implements DataDownl
 			}
 		});			
 		return builder.create();
+	}
+
+	@Override
+	public void onHistoryDelete(String selectedJobs) {
+		if(selectedJobs == null) {
+			new DeleteHistoryTask(this, mRemote.buildURL(), mRemote.getApiKey()).execute();
+		}
+		else {
+			new DeleteHistoryTask(this, mRemote.buildURL(), mRemote.getApiKey()).execute(selectedJobs);
+		}
+	}
+
+	@Override
+	public void onHistoryDeleteFinished(String result) {
+		try {
+			String status = new JSONObject(result).getString(SabnzbdConstants.STATUS);
+			if(Boolean.parseBoolean(status)) {
+				downloadHistory();
+			}
+			else {
+				Toast.makeText(this, "There was an error.", Toast.LENGTH_SHORT);
+			}
+		} 
+		catch (JSONException e) {
+			e.printStackTrace();
+		}
 	}
 }

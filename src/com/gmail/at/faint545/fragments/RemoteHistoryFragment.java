@@ -9,6 +9,9 @@ import org.json.JSONObject;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
+import android.support.v4.app.SupportActivity;
+import android.support.v4.view.Menu;
+import android.support.v4.view.MenuItem;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,7 +26,20 @@ public class RemoteHistoryFragment extends ListFragment {
 	private RemoteHistoryAdapter mAdapter;
 	private ArrayList<JSONObject> mOldJobs = new ArrayList<JSONObject>();
 	private ArrayList<Integer> mSelectedPositions = new ArrayList<Integer>();
+	private RemoteHistoryListener mListener;
 	
+	public final static int DELETE_ALL = 0x123, DELETE_SELECTED = DELETE_ALL >> 1;
+	
+	public interface RemoteHistoryListener {
+		public void onHistoryDelete(String selectedJobs);
+	}
+	
+	@Override
+	public void onAttach(SupportActivity activity) {
+		mListener = (RemoteHistoryListener) activity;
+		super.onAttach(activity);
+	}
+
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,Bundle savedInstanceState) {
 		return inflater.inflate(R.layout.remote_history, null);
@@ -31,9 +47,46 @@ public class RemoteHistoryFragment extends ListFragment {
 
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
+		setHasOptionsMenu(true);
 		getListView().setCacheColorHint(Color.TRANSPARENT); // Optimization for ListView
 		setupListAdapter();
 		super.onActivityCreated(savedInstanceState);
+	}
+
+	@Override
+	public void onPrepareOptionsMenu(Menu menu) {
+		menu.clear();
+		if(mSelectedPositions.size() > 0) {
+			menu.add(Menu.NONE,DELETE_SELECTED,Menu.NONE,"Delete selected");
+		}
+		else {
+			menu.add(Menu.NONE,DELETE_ALL,Menu.NONE,"Delete all");
+		}
+		super.onPrepareOptionsMenu(menu);
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch(item.getItemId()) {
+		case DELETE_ALL:
+			mListener.onHistoryDelete(null);
+			break;
+		case DELETE_SELECTED:
+			StringBuilder selectedJobs = new StringBuilder();
+			for(Integer position : mSelectedPositions) {				
+				JSONObject job = mOldJobs.get(position);
+				try {
+					String id = job.getString(SabnzbdConstants.NZOID);
+					selectedJobs.append(id).append(",");
+				} 
+				catch (JSONException e) {
+					e.printStackTrace();
+				}
+			}
+			mListener.onHistoryDelete(selectedJobs.substring(0, selectedJobs.lastIndexOf(",")));			
+			break;
+		}
+		return super.onOptionsItemSelected(item);
 	}
 
 	/*

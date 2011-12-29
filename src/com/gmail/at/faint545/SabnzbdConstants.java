@@ -25,5 +25,9 @@ public interface SabnzbdConstants {
 							   MBLEFT = "mbleft",
 							   MB = "mb",
 							   SLOTS = "slots",
-							   STATUS = "status";
+							   STATUS = "status",
+							   DELETE = "delete",
+							   VALUE = "value",
+							   NZOID = "nzo_id",
+							   ALL = "all";
 }
