@@ -24,8 +24,6 @@ public class RemoteHistoryFragment extends ListFragment {
 	private ArrayList<JSONObject> mOldJobs = new ArrayList<JSONObject>();
 	private ArrayList<Integer> mSelectedPositions = new ArrayList<Integer>();
 	
-	public final static int DELETE_ALL = 0x123, DELETE_SELECTED = DELETE_ALL >> 1;
-	
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,Bundle savedInstanceState) {
 		return inflater.inflate(R.layout.remote_history, null);

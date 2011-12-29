@@ -9,8 +9,10 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.Menu;
 import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
+import android.util.Log;
 import android.view.View;
 import android.widget.TabHost;
 import android.widget.TabHost.OnTabChangeListener;
@@ -33,13 +35,14 @@ public class RemoteDetailsActivity extends FragmentActivity implements DataDownl
 	private HistoryDownloadTask historyDownload;
 	private AlertDialog errorDialog;
 	
+	public final static int HISTORY_DELETE_ALL = 0x123, HISTORY_DELETE_SELECTED = HISTORY_DELETE_ALL >> 1;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		mRemote = (Remote) getIntent().getParcelableExtra("selected_remote"); // Retrieved the selected remote
 		downloadData(); // Begin downloading history & queue
 		setContentView(R.layout.remote_details);		
-		setupTabs();		
+		setupTabs();
 		super.onCreate(savedInstanceState);
 	}
 
@@ -71,7 +74,21 @@ public class RemoteDetailsActivity extends FragmentActivity implements DataDownl
 		mTabsAdapter.add(mTabHost.newTabSpec("queue").setIndicator(queueIndicator),new RemoteQueueFragment(),null);
 		mTabsAdapter.add(mTabHost.newTabSpec("history").setIndicator(historyIndicator),new RemoteHistoryFragment(),null);
 	}
-	
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		if(mTabHost != null) {
+			String tag = mTabHost.getCurrentTabTag();
+			if(tag.equalsIgnoreCase("queue")) {
+				menu.add("Pause all");
+			}
+			else if(tag.equalsIgnoreCase("history")) {
+				menu.add("Delete all");
+			}
+		}
+		return super.onCreateOptionsMenu(menu);
+	}
+
 	/*
 	 * Tabs adapter subclass
 	 */	
@@ -133,6 +150,7 @@ public class RemoteDetailsActivity extends FragmentActivity implements DataDownl
 
 		@Override
 		public void onPageSelected(int position) {
+			((FragmentActivity) mContext).invalidateOptionsMenu();
 			mTabHost.setCurrentTab(position);
 		}
 
@@ -141,6 +159,7 @@ public class RemoteDetailsActivity extends FragmentActivity implements DataDownl
 
 		@Override
 		public void onTabChanged(String tag) {
+			((FragmentActivity) mContext).invalidateOptionsMenu();
 			int position = mTabHost.getCurrentTab();
 			mViewPager.setCurrentItem(position);
 		}
