@@ -33,13 +33,6 @@ public class RemoteFragmentAdapter extends ArrayAdapter<Remote> {
 			convertView = inflater.inflate(resourceId, null);
 		}
 		
-		if(position%2 == 0) {
-			convertView.setBackgroundResource(R.drawable.remote_listview_selector_odd);
-		}
-		else {
-			convertView.setBackgroundResource(R.drawable.remote_listview_selector_even);
-		}
-		
 		TextView name = (TextView) convertView.findViewById(R.id.remote_layout_row_name);
 		TextView host = (TextView) convertView.findViewById(R.id.remote_layout_row_host);
 				

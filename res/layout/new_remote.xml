@@ -24,7 +24,8 @@
             android:layout_height="wrap_content"
             android:inputType="text"
             android:singleLine="true"
-            android:hint="@string/nickname_hint"/>
+            android:hint="@string/nickname_hint"
+            android:textColor="@color/black"/>
 
         <TextView
             android:layout_width="match_parent"
@@ -44,7 +45,8 @@
                 android:inputType="text"
                 android:singleLine="true"
                 android:layout_weight="1.0"
-                android:hint="@string/address_hint"/>
+                android:hint="@string/address_hint"
+                android:textColor="@color/black"/>
 
             <EditText
                 android:id="@+id/new_remote_layout_port_edit_text"
@@ -53,7 +55,8 @@
                 android:inputType="number"
                 android:singleLine="true"
                 android:layout_weight="1.0"
-                android:hint="@string/port_hint"/>
+                android:hint="@string/port_hint"
+                android:textColor="@color/black"/>
         </LinearLayout>
 
         <TextView
@@ -75,7 +78,8 @@
 		            android:layout_weight="1.0"
 		            android:inputType="text"
 		            android:singleLine="true"
-		            android:hint="@string/apikey_hint"/>
+		            android:hint="@string/apikey_hint"
+		            android:textColor="@color/black"/>
 		
 		        <Button
 		            android:id="@+id/new_remote_layout_qr_button"
@@ -83,6 +87,7 @@
 		            android:layout_height="wrap_content"
 		            android:layout_weight=".2"
 		            android:text="@string/qr_button_text"
+		            android:textColor="@color/black"
 		            android:onClick="launchQrScanner"/>
         </LinearLayout>
         
@@ -95,7 +100,8 @@
             android:id="@+id/new_remote_save_button"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:text="@string/save_remote_button_text" />
+            android:text="@string/save_remote_button_text"
+            android:textColor="@color/black"/>
 
     </LinearLayout>
 

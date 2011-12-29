@@ -3,7 +3,6 @@ package com.gmail.at.faint545.fragments;
 import java.util.ArrayList;
 
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.SupportActivity;
@@ -23,7 +22,6 @@ import com.gmail.at.faint545.R;
 import com.gmail.at.faint545.Remote;
 import com.gmail.at.faint545.activities.RemoteDetailsActivity;
 import com.gmail.at.faint545.adapters.RemoteFragmentAdapter;
-import com.gmail.at.faint545.databases.RemoteDatabase;
 
 public class RemoteFragment extends ListFragment {
 	private RemoteFragmentAdapter mAdapter;
@@ -33,9 +31,9 @@ public class RemoteFragment extends ListFragment {
 	
 	public static final int EDIT_REMOTE = 0x88, DELETE_REMOTE = EDIT_REMOTE >> 2;
 
-	/**************************************
+	/*
 	 * Callback functions for this class
-	 **************************************/
+	 */
 	public interface RemoteFragmentListener {
 		public void onEditRemote(int position);
 		public void onDeleteRemote(int position);
@@ -56,12 +54,6 @@ public class RemoteFragment extends ListFragment {
 	public void onAttach(SupportActivity activity) {
 		mListener = (RemoteFragmentListener) activity;
 		super.onAttach(activity);
-	}
-
-	@Override
-	public void onCreate(Bundle savedInstanceState) {
-		setRetainInstance(true); // Retain instance across activity recreation
-		super.onCreate(savedInstanceState);
 	}
 	
 	@Override

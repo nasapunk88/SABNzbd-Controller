@@ -32,14 +32,33 @@ public class ControllerActivity extends FragmentActivity implements NewRemoteLis
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);        
         getSupportActionBar().setDisplayShowHomeEnabled(false); // Remove activity/application icon                        
-        retrieveRemotes();
+        fetchRemotes();
+        //fetchFalseRemotes();
         attachFragment(remoteFragment = RemoteFragment.newInstance(remotes)); // Attach RemoteFragment to this activity
     }
 
     /*
+     * Specifically used for testing purposes
+     */
+    private void fetchFalseRemotes() {
+    	remotes.add(new Remote("Remote1").setAddress("localhost").setPort("1000"));
+    	remotes.add(new Remote("Remote2").setAddress("localhost").setPort("1000"));
+    	remotes.add(new Remote("Remote3").setAddress("localhost").setPort("1000"));
+    	remotes.add(new Remote("Remote4").setAddress("localhost").setPort("1000"));
+    	remotes.add(new Remote("Remote5").setAddress("localhost").setPort("1000"));
+    	remotes.add(new Remote("Remote6").setAddress("localhost").setPort("1000"));
+    	remotes.add(new Remote("Remote7").setAddress("localhost").setPort("1000"));
+    	remotes.add(new Remote("Remote8").setAddress("localhost").setPort("1000"));
+    	remotes.add(new Remote("Remote9").setAddress("localhost").setPort("1000"));
+    	remotes.add(new Remote("Remote10").setAddress("localhost").setPort("1000"));
+    	remotes.add(new Remote("Remote11").setAddress("localhost").setPort("1000"));
+    	remotes.add(new Remote("Remote12").setAddress("localhost").setPort("1000"));
+	}
+
+	/*
      * Obtain all SABNzbd remote profiles from the local data store.
      */
-	private void retrieveRemotes() {		
+	private void fetchRemotes() {		
 		RemoteDatabase db = new RemoteDatabase(this);		
 		db.open();
 		Cursor cur = db.getAllRows();
@@ -104,7 +123,7 @@ public class ControllerActivity extends FragmentActivity implements NewRemoteLis
 	 */
 	@Override
 	public void onRemoteSaved() {
-		retrieveRemotes();
+		fetchRemotes();
 		remoteFragment.notifyDataSetChanged();
 		getSupportFragmentManager().popBackStack(); // Pop off the last saved state
 		newRemoteFragment = null;
@@ -119,16 +138,26 @@ public class ControllerActivity extends FragmentActivity implements NewRemoteLis
 		super.onActivityResult(requestCode, resultCode, data);
 	}
 
+	/*
+	 * Called when a user wants to edit a remote via long press
+	 */
 	@Override
 	public void onEditRemote(int position) {
 		launchNewRemoteFragment(remotes.get(position));
 	}
 
+	/*
+	 * Called when a user wants to add a remote by clicking the
+	 * "Add Remote" button
+	 */
 	@Override
 	public void onAddRemoteClicked() {
 		launchNewRemoteFragment(null);
 	}
 
+	/*
+	 * Called when a user wants to delete a remote via long press
+	 */
 	@Override
 	public void onDeleteRemote(int position) {
 		RemoteDatabase db = new RemoteDatabase(this);

@@ -11,7 +11,6 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
-import android.util.Log;
 import android.view.View;
 import android.widget.TabHost;
 import android.widget.TabHost.OnTabChangeListener;
@@ -32,24 +31,33 @@ public class RemoteDetailsActivity extends FragmentActivity implements DataDownl
 	private Remote mRemote;
 	private QueueDownloadTask queueDownload;
 	private HistoryDownloadTask historyDownload;
+	private AlertDialog errorDialog;
 	
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		mRemote = (Remote) getIntent().getParcelableExtra("selected_remote");
+		mRemote = (Remote) getIntent().getParcelableExtra("selected_remote"); // Retrieved the selected remote
 		downloadData(); // Begin downloading history & queue
 		setContentView(R.layout.remote_details);		
 		setupTabs();		
 		super.onCreate(savedInstanceState);
 	}
 
+	/*
+	 * A helper function to begin executing the tasks needed to download
+	 * the queue and history
+	 */
 	private void downloadData() {
 		queueDownload = new QueueDownloadTask(this, mRemote.buildURL(),mRemote.getApiKey());
 		historyDownload = new HistoryDownloadTask(this, mRemote.buildURL(), mRemote.getApiKey());
 		queueDownload.execute();
 		historyDownload.execute();
+		errorDialog = buildAlertDialog();
 	}
 
+	/*
+	 * A helper function to create/add tabs to the tab host
+	 */
 	private void setupTabs() {
 		mTabHost = (TabHost) findViewById(android.R.id.tabhost);
 		mTabHost.setup();
@@ -64,9 +72,9 @@ public class RemoteDetailsActivity extends FragmentActivity implements DataDownl
 		mTabsAdapter.add(mTabHost.newTabSpec("history").setIndicator(historyIndicator),new RemoteHistoryFragment(),null);
 	}
 	
-	/**************************
+	/*
 	 * Tabs adapter subclass
-	 **************************/	
+	 */	
 	public static class TabsAdapter extends FragmentPagerAdapter implements OnTabChangeListener, OnPageChangeListener {
 		private final Context mContext;
 		private final TabHost mTabHost;
@@ -138,11 +146,16 @@ public class RemoteDetailsActivity extends FragmentActivity implements DataDownl
 		}
 	}
 
+	/*
+	 * A callback function for when the queue has finished downloading
+	 */
 	@Override
 	public void onQueueDownloadFinished(String result) {
 		queueDownload = null;
 		if(result == null) {
-			showAlertDialog();
+			if(!errorDialog.isShowing()) {
+				errorDialog.show();
+			}
 		}
 		else {
 			Bundle arguments = new Bundle();
@@ -151,11 +164,16 @@ public class RemoteDetailsActivity extends FragmentActivity implements DataDownl
 		}
 	}
 	
+	/*
+	 * A callback function for when the history has finished downloading
+	 */
 	@Override
 	public void onHistoryDownloadFinished(String result) {
 		historyDownload = null;
 		if(result == null) {
-			showAlertDialog();
+			if(!errorDialog.isShowing()) {
+				errorDialog.show();
+			}
 		}
 		else {
 			Bundle arguments = new Bundle();
@@ -164,7 +182,10 @@ public class RemoteDetailsActivity extends FragmentActivity implements DataDownl
 		}
 	}	
 
-	private void showAlertDialog() {
+	/*
+	 * A helper function to build an alert/error dialog
+	 */
+	private AlertDialog buildAlertDialog() {
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		builder.setMessage("There was an error. Please check your connection and try again.");
 		builder.setCancelable(false);
@@ -181,6 +202,6 @@ public class RemoteDetailsActivity extends FragmentActivity implements DataDownl
 				finish();
 			}
 		});			
-		builder.create().show();
+		return builder.create();
 	}
 }

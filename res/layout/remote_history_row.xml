@@ -3,13 +3,21 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="horizontal">
+    
+    <CheckBox
+        android:id="@+id/remote_history_checkbox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:clickable="false"
+        android:focusable="false"/>    
        
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:layout_weight="1.0"
-        android:padding="6dp">        
+        android:padding="6dp">       
+        
 		    <TextView android:id="@+id/remote_history_row_filename"
 		        android:layout_width="fill_parent"
 		        android:layout_height="wrap_content"
@@ -24,10 +32,4 @@
 		        android:textColor="@color/black"
 		        android:textAppearance="@android:style/TextAppearance.Small"/>
     </LinearLayout>
-    
-    <LinearLayout
-        android:id="@+id/remote_history_row_indicator"
-        android:layout_width="2dp"
-        android:layout_height="match_parent"
-        android:visibility="gone"/>
 </LinearLayout>

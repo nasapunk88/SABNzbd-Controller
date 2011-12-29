@@ -33,14 +33,7 @@ public class RemoteQueueAdapter extends ArrayAdapter<JSONObject> {
 		JSONObject job = jobs.get(position);
 		if(convertView == null) {
 			convertView = ((LayoutInflater) mContext.getSystemService(Activity.LAYOUT_INFLATER_SERVICE)).inflate(resourceID, null);
-		}
-		
-		if(position%2 == 0) {
-			convertView.setBackgroundResource(R.drawable.remote_listview_selector_odd);
-		}
-		else {
-			convertView.setBackgroundResource(R.drawable.remote_listview_selector_even);
-		}		
+		}	
 		
 		TextView filename = (TextView) convertView.findViewById(R.id.remote_queue_row_filename);
 		TextView sizeLeft = (TextView) convertView.findViewById(R.id.remote_queue_row_sizeleft);
