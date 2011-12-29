@@ -15,28 +15,28 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 
-import android.app.Activity;
 import android.app.ProgressDialog;
 import android.os.AsyncTask;
+import android.support.v4.app.Fragment;
 
 public class DeleteHistoryTask extends AsyncTask<String, Void, String> {
 	private ProgressDialog progressDialog;
-	private Activity mContext;
 	private String url,auth_api;
+	private Fragment fragment;
 	
 	public interface HistoryDeleteTaskListener {
 		public void onHistoryDeleteFinished(String result);
 	}
 	
-	public DeleteHistoryTask(Activity context,String url,String api) {
-		mContext = context;
+	public DeleteHistoryTask(Fragment fragment,String url,String api) {
+		this.fragment = fragment;
 		this.url = url;
 		auth_api = api;
 	}
 	
 	@Override
 	protected void onPreExecute() {
-		progressDialog = ProgressDialog.show(mContext, null, "Deleting history");
+		progressDialog = ProgressDialog.show(fragment.getActivity(), null, "Deleting history");
 		super.onPreExecute();
 	}
 
@@ -87,7 +87,7 @@ public class DeleteHistoryTask extends AsyncTask<String, Void, String> {
 
 	@Override
 	protected void onPostExecute(String result) {
-		HistoryDeleteTaskListener listener = (HistoryDeleteTaskListener) mContext;
+		HistoryDeleteTaskListener listener = (HistoryDeleteTaskListener) fragment;
 		listener.onHistoryDeleteFinished(result);
 		cleanup();
 		super.onPostExecute(result);
@@ -96,7 +96,7 @@ public class DeleteHistoryTask extends AsyncTask<String, Void, String> {
 	private void cleanup() {		
 		progressDialog.dismiss();
 		progressDialog = null;
-		mContext = null;
+		fragment = null;
 		url = null;
 		auth_api = null;
 	}

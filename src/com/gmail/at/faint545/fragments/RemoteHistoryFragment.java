@@ -17,22 +17,35 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.ListView;
+import android.widget.Toast;
 
+import com.gmail.at.faint545.DeleteHistoryTask;
+import com.gmail.at.faint545.DeleteHistoryTask.HistoryDeleteTaskListener;
 import com.gmail.at.faint545.R;
+import com.gmail.at.faint545.Remote;
 import com.gmail.at.faint545.SabnzbdConstants;
 import com.gmail.at.faint545.adapters.RemoteHistoryAdapter;
+import com.handmark.pulltorefresh.library.PullToRefreshBase.OnRefreshListener;
+import com.handmark.pulltorefresh.library.PullToRefreshListView;
 
-public class RemoteHistoryFragment extends ListFragment {
+public class RemoteHistoryFragment extends ListFragment implements HistoryDeleteTaskListener {
 	private RemoteHistoryAdapter mAdapter;
 	private ArrayList<JSONObject> mOldJobs = new ArrayList<JSONObject>();
 	private ArrayList<Integer> mSelectedPositions = new ArrayList<Integer>();
 	private RemoteHistoryListener mListener;
+	private PullToRefreshListView mPtrView;
 	
 	public final static int DELETE_ALL = 0x123, DELETE_SELECTED = DELETE_ALL >> 1;
 	
 	public interface RemoteHistoryListener {
-		public void onHistoryDelete(String selectedJobs);
+		public void onRefreshHistory(PullToRefreshListView view);
 	}
+	
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		setHasOptionsMenu(true);			
+		super.onCreate(savedInstanceState);
+	}	
 	
 	@Override
 	public void onAttach(SupportActivity activity) {
@@ -47,19 +60,33 @@ public class RemoteHistoryFragment extends ListFragment {
 
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
-		setHasOptionsMenu(true);
+		mPtrView = (PullToRefreshListView) getView().findViewById(R.id.remote_history_ptr);
 		getListView().setCacheColorHint(Color.TRANSPARENT); // Optimization for ListView
 		setupListAdapter();
+		initListeners();
 		super.onActivityCreated(savedInstanceState);
+	}
+
+	/*
+	 * Default implementation for initializing listeners for views
+	 */
+	private void initListeners() {
+		mPtrView.setOnRefreshListener(new OnRefreshListener() {
+			@Override
+			public void onRefresh() {
+				mListener.onRefreshHistory(mPtrView);
+			}			
+		});
 	}
 
 	@Override
 	public void onPrepareOptionsMenu(Menu menu) {
 		menu.clear();
-		if(mSelectedPositions.size() > 0) {
+		// Only show these two options if there are jobs to delete
+		if(mSelectedPositions.size() > 0 && mOldJobs.size() > 0) {
 			menu.add(Menu.NONE,DELETE_SELECTED,Menu.NONE,"Delete selected");
 		}
-		else {
+		else if(mOldJobs.size() > 0){
 			menu.add(Menu.NONE,DELETE_ALL,Menu.NONE,"Delete all");
 		}
 		super.onPrepareOptionsMenu(menu);
@@ -69,11 +96,12 @@ public class RemoteHistoryFragment extends ListFragment {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch(item.getItemId()) {
 		case DELETE_ALL:
-			mListener.onHistoryDelete(null);
+			onHistoryDelete(null);
 			break;
 		case DELETE_SELECTED:
 			StringBuilder selectedJobs = new StringBuilder();
-			for(Integer position : mSelectedPositions) {				
+			// Create a string of jobs to delete, separated by commas i.e: job1,job2,job3
+			for(int position : mSelectedPositions) {				
 				JSONObject job = mOldJobs.get(position);
 				try {
 					String id = job.getString(SabnzbdConstants.NZOID);
@@ -83,10 +111,42 @@ public class RemoteHistoryFragment extends ListFragment {
 					e.printStackTrace();
 				}
 			}
-			mListener.onHistoryDelete(selectedJobs.substring(0, selectedJobs.lastIndexOf(",")));			
+			onHistoryDelete(selectedJobs.substring(0, selectedJobs.lastIndexOf(","))); // Chop off the last comma
 			break;
 		}
 		return super.onOptionsItemSelected(item);
+	}
+	
+	/*
+	 * A function for when a user selects to delete a specific or all jobs. #ref: RemoteHistoryFragment.java
+	 */
+	public void onHistoryDelete(String selectedJobs) {
+		Remote currentRemote = getActivity().getIntent().getParcelableExtra("selected_remote");
+		if(selectedJobs == null) {
+			new DeleteHistoryTask(this, currentRemote.buildURL(), currentRemote.getApiKey()).execute();
+		}
+		else {
+			new DeleteHistoryTask(this, currentRemote.buildURL(), currentRemote.getApiKey()).execute(selectedJobs);
+		}
+	}	
+	
+	/*
+	 * A helper function to update the list of old jobs after a delete
+	 * operation has completed.
+	 */
+	public void updateRemovedJobs() {
+		ArrayList<JSONObject> removeList = new ArrayList<JSONObject>();
+		if(mSelectedPositions.size() > 0) { // Only delete SELECTED jobs
+			for(int position : mSelectedPositions) {
+				removeList.add(mOldJobs.get(position));
+			}		
+			mOldJobs.removeAll(removeList);
+		}
+		else { // Delete ALL jobs
+			mOldJobs.clear();
+		}
+		mAdapter.notifyDataSetChanged();
+		mSelectedPositions.clear();
 	}
 
 	/*
@@ -108,9 +168,11 @@ public class RemoteHistoryFragment extends ListFragment {
 		// Add or remove the current position from our list of selected positions
 		if(checkbox.isChecked()) {
 			mSelectedPositions.add(position);
+			mSelectedPositions.trimToSize();
 		}
 		else {
 			mSelectedPositions.remove((Object) position);
+			mSelectedPositions.trimToSize();
 		}
 		super.onListItemClick(l, v, position, id);
 	}
@@ -143,4 +205,24 @@ public class RemoteHistoryFragment extends ListFragment {
 		if(mAdapter != null)
 			mAdapter.notifyDataSetChanged();
 	}
+	
+	/*
+	 * A callback function for when the delete operation has completed. #ref: DeleteHistoryTask.java
+	 */
+	@Override
+	public void onHistoryDeleteFinished(String result) {
+		try {
+			String status = new JSONObject(result).getString(SabnzbdConstants.STATUS);
+			if(Boolean.parseBoolean(status)) {
+				updateRemovedJobs();
+				Toast.makeText(getActivity(), "Delete successful.", Toast.LENGTH_SHORT).show();				
+			}
+			else {
+				Toast.makeText(getActivity(), "There was an error.", Toast.LENGTH_SHORT).show();
+			}
+		} 
+		catch (JSONException e) {
+			Toast.makeText(getActivity(), "There was an error.", Toast.LENGTH_SHORT).show();
+		}
+	}	
 }

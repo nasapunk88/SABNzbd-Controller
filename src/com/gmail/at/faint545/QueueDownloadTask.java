@@ -15,28 +15,32 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 
-import android.app.Activity;
+import com.handmark.pulltorefresh.library.PullToRefreshListView;
+
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.os.AsyncTask;
 
 public class QueueDownloadTask extends AsyncTask<Void, Void, String> {
 	private ProgressDialog progressDialog;
-	private Activity mContext;
+	private Context mContext;
 	private String url,auth_api;
+	private PullToRefreshListView mPtrView;
 	
 	public interface DataDownloadTaskListener {
 		public void onQueueDownloadFinished(String result);
 	}
 	
-	public QueueDownloadTask(Activity context,String url,String api) {
+	public QueueDownloadTask(Context context,String url,String api,PullToRefreshListView ptrView) {
 		mContext = context;
-		this.url = url;
+		this.url = url;		
 		auth_api = api;
+		mPtrView = ptrView;
 	}
 	
 	@Override
 	protected void onPreExecute() {
-		progressDialog = ProgressDialog.show(mContext, null, "Loading data");
+		if(mPtrView == null) progressDialog = ProgressDialog.show(mContext, null, "Loading data");
 		super.onPreExecute();
 	}
 
@@ -83,9 +87,12 @@ public class QueueDownloadTask extends AsyncTask<Void, Void, String> {
 		super.onPostExecute(result);
 	}
 
-	private void cleanup() {		
-		progressDialog.dismiss();
-		progressDialog = null;
+	private void cleanup() {
+		if(mPtrView != null) mPtrView.onRefreshComplete();
+		if(progressDialog != null) progressDialog.dismiss();
+		
+		mPtrView = null;
+		progressDialog = null;		
 		mContext = null;
 		url = null;
 		auth_api = null;

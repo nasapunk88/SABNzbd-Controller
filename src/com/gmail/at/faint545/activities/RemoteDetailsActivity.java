@@ -2,9 +2,6 @@ package com.gmail.at.faint545.activities;
 
 import java.util.ArrayList;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -14,34 +11,32 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
-import android.util.Log;
 import android.view.View;
 import android.widget.TabHost;
-import android.widget.Toast;
 import android.widget.TabHost.OnTabChangeListener;
 
-import com.gmail.at.faint545.DeleteHistoryTask;
-import com.gmail.at.faint545.DeleteHistoryTask.HistoryDeleteTaskListener;
 import com.gmail.at.faint545.HistoryDownloadTask;
 import com.gmail.at.faint545.HistoryDownloadTask.HistoryDownloadTaskListener;
 import com.gmail.at.faint545.QueueDownloadTask;
 import com.gmail.at.faint545.QueueDownloadTask.DataDownloadTaskListener;
 import com.gmail.at.faint545.R;
 import com.gmail.at.faint545.Remote;
-import com.gmail.at.faint545.SabnzbdConstants;
 import com.gmail.at.faint545.fragments.RemoteHistoryFragment;
 import com.gmail.at.faint545.fragments.RemoteHistoryFragment.RemoteHistoryListener;
+import com.gmail.at.faint545.fragments.RemoteQueueFragment.RemoteQueueListener;
 import com.gmail.at.faint545.fragments.RemoteQueueFragment;
+import com.handmark.pulltorefresh.library.PullToRefreshListView;
 
-public class RemoteDetailsActivity extends FragmentActivity implements DataDownloadTaskListener,HistoryDownloadTaskListener,RemoteHistoryListener,HistoryDeleteTaskListener {
+public class RemoteDetailsActivity extends FragmentActivity implements DataDownloadTaskListener,
+																	   HistoryDownloadTaskListener,
+																	   RemoteHistoryListener,
+																	   RemoteQueueListener{
 	private TabHost mTabHost;
 	private ViewPager mViewPager;
 	private TabsAdapter mTabsAdapter;
 	private Remote mRemote;
 	private AlertDialog errorDialog;
-	
-	public final static int HISTORY_DELETE_ALL = 0x123, HISTORY_DELETE_SELECTED = HISTORY_DELETE_ALL >> 1,
-							QUEUE_PAUSE_ALL = HISTORY_DELETE_ALL >> 1, QUEUE_PAUSE_SELECTED = QUEUE_PAUSE_ALL >> 1;	
+	private PullToRefreshListView mHistoryPtrView,mQueuePtrView;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -63,11 +58,11 @@ public class RemoteDetailsActivity extends FragmentActivity implements DataDownl
 	}
 	
 	private void downloadQueue() {
-		new QueueDownloadTask(this, mRemote.buildURL(),mRemote.getApiKey()).execute();
+		new QueueDownloadTask(this, mRemote.buildURL(),mRemote.getApiKey(),mQueuePtrView).execute();
 	}
 	
 	private void downloadHistory() {
-		new HistoryDownloadTask(this, mRemote.buildURL(), mRemote.getApiKey()).execute();
+		new HistoryDownloadTask(this, mRemote.buildURL(), mRemote.getApiKey(),mHistoryPtrView).execute();
 	}
 
 	/*
@@ -164,11 +159,10 @@ public class RemoteDetailsActivity extends FragmentActivity implements DataDownl
 	}
 
 	/*
-	 * A callback function for when the queue has finished downloading
+	 * A callback function for when the queue has finished downloading. #ref: QueueDownloadTask.java
 	 */
 	@Override
 	public void onQueueDownloadFinished(String result) {
-		//queueDownload = null;
 		if(result == null) {
 			if(!errorDialog.isShowing()) {
 				errorDialog.show();
@@ -182,11 +176,10 @@ public class RemoteDetailsActivity extends FragmentActivity implements DataDownl
 	}
 	
 	/*
-	 * A callback function for when the history has finished downloading
+	 * A callback function for when the history has finished downloading. #ref: HistoryDownloadTask.java  
 	 */
 	@Override
 	public void onHistoryDownloadFinished(String result) {
-		//historyDownload = null;
 		if(result == null) {
 			if(!errorDialog.isShowing()) {
 				errorDialog.show();
@@ -197,7 +190,7 @@ public class RemoteDetailsActivity extends FragmentActivity implements DataDownl
 			arguments.putString("data", result);
 			mTabsAdapter.getItem(1).setArguments(arguments);
 		}
-	}	
+	}
 
 	/*
 	 * A helper function to build an alert/error dialog
@@ -221,30 +214,19 @@ public class RemoteDetailsActivity extends FragmentActivity implements DataDownl
 		});			
 		return builder.create();
 	}
-
+	
+	/*
+	 * A callback function for when a user "pulls-to-refresh" on the History tab. #ref: RemoteHistoryFragment.java
+	 */
 	@Override
-	public void onHistoryDelete(String selectedJobs) {
-		if(selectedJobs == null) {
-			new DeleteHistoryTask(this, mRemote.buildURL(), mRemote.getApiKey()).execute();
-		}
-		else {
-			new DeleteHistoryTask(this, mRemote.buildURL(), mRemote.getApiKey()).execute(selectedJobs);
-		}
+	public void onRefreshHistory(PullToRefreshListView view) {
+		mHistoryPtrView = view;
+		downloadHistory();
 	}
 
 	@Override
-	public void onHistoryDeleteFinished(String result) {
-		try {
-			String status = new JSONObject(result).getString(SabnzbdConstants.STATUS);
-			if(Boolean.parseBoolean(status)) {
-				downloadHistory();
-			}
-			else {
-				Toast.makeText(this, "There was an error.", Toast.LENGTH_SHORT);
-			}
-		} 
-		catch (JSONException e) {
-			e.printStackTrace();
-		}
+	public void onRefreshQueue(PullToRefreshListView view) {
+		mQueuePtrView = view;
+		downloadQueue();
 	}
 }
