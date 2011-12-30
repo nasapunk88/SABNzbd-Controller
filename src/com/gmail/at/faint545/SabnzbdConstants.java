@@ -32,7 +32,9 @@ public interface SabnzbdConstants {
 							   VALUE = "value",
 							   NZOID = "nzo_id",
 							   ID = "id",
-							   ALL = "all";
+							   ALL = "all",
+							   TIMELEFT = "timeleft",
+							   SPEED = "speed";
 	
 	public final static String PAUSED = "Paused",
 							   DOWNLOADING = "Downloading",

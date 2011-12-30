@@ -18,11 +18,9 @@ import com.gmail.at.faint545.R;
 import com.gmail.at.faint545.SabnzbdConstants;
 
 public class RemoteHistoryAdapter extends ArrayAdapter<JSONObject> {
-	private TextView name, status;
 	private Context mContext;
 	private int resourceID;
 	private ArrayList<JSONObject> oldJobs;
-	private CheckBox isChecked;
 
 	public RemoteHistoryAdapter(Context context, int resourceID, ArrayList<JSONObject> objects) {
 		super(context, resourceID, objects);
@@ -35,30 +33,33 @@ public class RemoteHistoryAdapter extends ArrayAdapter<JSONObject> {
 	public View getView(int position, View convertView, ViewGroup parent) {
 		if(convertView == null) {
 			convertView = ((LayoutInflater) mContext.getSystemService(Activity.LAYOUT_INFLATER_SERVICE)).inflate(resourceID, null);
+			ViewHolder viewHolder = new ViewHolder();
+			viewHolder.name = (TextView) convertView.findViewById(R.id.remote_history_row_filename);
+			viewHolder.status = (TextView) convertView.findViewById(R.id.remote_history_row_status);
+			viewHolder.isChecked = (CheckBox) convertView.findViewById(R.id.remote_history_checkbox);
+			convertView.setTag(viewHolder);
 		}
-		
-		initViews(convertView);
-		
-		isChecked.setChecked(false);
-		
+				
 		JSONObject oldJob = oldJobs.get(position);
-		String jobStatus = null, jobName = null;
-		try {
-			jobStatus = oldJob.getString(SabnzbdConstants.STATUS);
-			jobName = oldJob.getString(SabnzbdConstants.NAME);
-		} 
-		catch (JSONException e) {
-			e.printStackTrace();
+		if(oldJob != null) {
+			ViewHolder viewHolder = (ViewHolder) convertView.getTag();
+			try {
+				String jobStatus = oldJob.getString(SabnzbdConstants.STATUS);
+				String jobName = oldJob.getString(SabnzbdConstants.NAME);
+				
+				viewHolder.name.setText(jobName);
+				viewHolder.status.setText(jobStatus);
+				viewHolder.isChecked.setChecked(false);
+			} 
+			catch (JSONException e) {
+				e.printStackTrace();
+			}		
 		}
-		
-		name.setText(jobName);
-		status.setText(jobStatus);
 		return convertView;
 	}
-
-	private void initViews(View convertView) {		
-		name = (TextView) convertView.findViewById(R.id.remote_history_row_filename);
-		status = (TextView) convertView.findViewById(R.id.remote_history_row_status);
-		isChecked = (CheckBox) convertView.findViewById(R.id.remote_history_checkbox);
+	
+	private static class ViewHolder {
+		private TextView name,status;
+		private CheckBox isChecked;
 	}
 }

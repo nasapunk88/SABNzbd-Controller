@@ -2,17 +2,15 @@ package com.gmail.at.faint545.adapters;
 
 import java.util.ArrayList;
 
-import com.gmail.at.faint545.R;
-import com.gmail.at.faint545.Remote;
-import com.gmail.at.faint545.R.drawable;
-import com.gmail.at.faint545.R.id;
-
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
+
+import com.gmail.at.faint545.R;
+import com.gmail.at.faint545.Remote;
 
 public class RemoteFragmentAdapter extends ArrayAdapter<Remote> {
 	private ArrayList<Remote> remotes;
@@ -31,18 +29,22 @@ public class RemoteFragmentAdapter extends ArrayAdapter<Remote> {
 		if(convertView == null) {
 			LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 			convertView = inflater.inflate(resourceId, null);
+			ViewHolder viewHolder = new ViewHolder();
+			viewHolder.name = (TextView) convertView.findViewById(R.id.remote_layout_row_name);
+			viewHolder.host = (TextView) convertView.findViewById(R.id.remote_layout_row_host);
+			convertView.setTag(viewHolder);
 		}
 		
-		TextView name = (TextView) convertView.findViewById(R.id.remote_layout_row_name);
-		TextView host = (TextView) convertView.findViewById(R.id.remote_layout_row_host);
-				
-		
-		if(remotes.size() > 0) {
-			Remote remote = remotes.get(position);
-			name.setText(remote.getName());
-			
-			host.setText(remote.getHost());
+		Remote remote = remotes.get(position);
+		if(remote != null) {
+			ViewHolder viewHolder = (ViewHolder) convertView.getTag();
+			viewHolder.name.setText(remote.getName());
+			viewHolder.host.setText(remote.getHost());
 		}
 		return convertView;
+	}
+	
+	private static class ViewHolder {
+		private TextView name,host;
 	}
 }

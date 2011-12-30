@@ -229,10 +229,5 @@ public class RemoteDetailsActivity extends FragmentActivity implements DataDownl
 			}
 		});			
 		return builder.create();
-	}
-
-	@Override
-	public void onQueueResumeFinished() {
-		downloadQueue(null);
 	}	
 }

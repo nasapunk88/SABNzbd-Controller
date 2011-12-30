@@ -55,7 +55,6 @@ public class RemoteHistoryFragment extends ListFragment implements HistoryAction
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,Bundle savedInstanceState) {
-		ViewGroup parent = (ViewGroup) getActivity().findViewById(R.id.remote_details_pager);
 		return inflater.inflate(R.layout.remote_history, null);
 	}
 
@@ -199,8 +198,8 @@ public class RemoteHistoryFragment extends ListFragment implements HistoryAction
 		try {
 			String status = new JSONObject(result).getString(SabnzbdConstants.STATUS);
 			if(Boolean.parseBoolean(status)) {
-				updateRemovedJobs();
-				Toast.makeText(getActivity(), R.string.delete_success, Toast.LENGTH_SHORT).show();
+				mListener.onRefreshHistory(null);
+				mSelectedPositions.clear();
 			}
 			else {
 				Toast.makeText(getActivity(), R.string.generic_error, Toast.LENGTH_SHORT).show();
@@ -214,24 +213,5 @@ public class RemoteHistoryFragment extends ListFragment implements HistoryAction
 	@Override
 	public void onHistoryRetryFinished(String result) {
 		// TODO Auto-generated method stub		
-	}
-	
-	/*
-	 * A helper function to update the list of old jobs after a delete
-	 * operation has completed.
-	 */
-	public void updateRemovedJobs() {
-		ArrayList<JSONObject> removeList = new ArrayList<JSONObject>();
-		if(mSelectedPositions.size() > 0) { // Only delete SELECTED jobs
-			for(int position : mSelectedPositions) {
-				removeList.add(mOldJobs.get(position));
-			}		
-			mOldJobs.removeAll(removeList);
-		}
-		else { // Delete ALL jobs
-			mOldJobs.clear();
-		}
-		mAdapter.notifyDataSetChanged();
-		mSelectedPositions.clear();
 	}		
 }

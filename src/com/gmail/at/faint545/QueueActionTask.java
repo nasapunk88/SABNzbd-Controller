@@ -134,7 +134,7 @@ public class QueueActionTask extends AsyncTask<String, Void, String> {
 		arguments.add(new BasicNameValuePair(SabnzbdConstants.APIKEY, api));
 		arguments.add(new BasicNameValuePair(SabnzbdConstants.OUTPUT, SabnzbdConstants.OUTPUT_JSON));
 		
-		if(params.length < 1) {			
+		if(params[0] == null) {			
 			arguments.add(new BasicNameValuePair(SabnzbdConstants.MODE, SabnzbdConstants.MODE_RESUME));
 		}
 		else {
@@ -151,7 +151,7 @@ public class QueueActionTask extends AsyncTask<String, Void, String> {
 		arguments.add(new BasicNameValuePair(SabnzbdConstants.APIKEY, api));
 		arguments.add(new BasicNameValuePair(SabnzbdConstants.OUTPUT, SabnzbdConstants.OUTPUT_JSON));
 		
-		if(params.length < 1) { // A global pause
+		if(params[0] == null) { // A global pause
 			arguments.add(new BasicNameValuePair(SabnzbdConstants.MODE, SabnzbdConstants.MODE_PAUSE));
 		}
 		else { // Individual pause

@@ -2,7 +2,6 @@ package com.gmail.at.faint545.fragments;
 
 import java.util.ArrayList;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
@@ -106,10 +105,7 @@ public class RemoteFragment extends ListFragment {
 	}
 	
 	private void initViews() {
-		LayoutInflater inflater = (LayoutInflater) getActivity().getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
-		View view = inflater.inflate(R.layout.remote_footer, null);
-		addRemote = (Button) view.findViewById(R.id.remote_add_remote);
-		getListView().addFooterView(view);
+		addRemote = (Button) getView().findViewById(R.id.remote_add_remote);
 		
 		addRemote.setOnClickListener(new OnClickListener() {
 			

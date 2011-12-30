@@ -23,5 +23,7 @@
     <string name="delete_success">Delete successful</string>
     <string name="generic_error">There was an error</string>
     <string name="pause_successful">Pause successful</string>
+    <string name="remote_queue_timeleft">Time Left</string>
+    <string name="remote_queu_speed">Speed</string>
 
 </resources>

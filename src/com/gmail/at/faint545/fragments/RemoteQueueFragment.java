@@ -6,18 +6,19 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.app.Activity;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.SupportActivity;
 import android.support.v4.view.Menu;
 import android.support.v4.view.MenuItem;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.gmail.at.faint545.QueueActionTask;
@@ -42,7 +43,6 @@ public class RemoteQueueFragment extends ListFragment implements QueueActionTask
 	
 	public interface RemoteQueueListener {
 		public void onRefreshQueue(PullToRefreshListView view);
-		public void onQueueResumeFinished();
 	}
 	
 	@Override
@@ -66,9 +66,16 @@ public class RemoteQueueFragment extends ListFragment implements QueueActionTask
 	public void onActivityCreated(Bundle savedInstanceState) {
 		mPtrView = (PullToRefreshListView) getView().findViewById(R.id.remote_queue_ptr);
 		getListView().setCacheColorHint(Color.TRANSPARENT); // Optimization for ListView
+		attachFooterView();
 		setupListAdapter();
 		initListeners();
 		super.onActivityCreated(savedInstanceState);
+	}
+
+	private void attachFooterView() {
+		LayoutInflater inflater = (LayoutInflater) getActivity().getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
+		View footer = inflater.inflate(R.layout.remote_queue_footer, null);
+		getListView().addFooterView(footer,null,false);
 	}
 	
 	@Override
@@ -103,9 +110,6 @@ public class RemoteQueueFragment extends ListFragment implements QueueActionTask
 				new QueueActionTask(this, currentRemote.buildURL(), currentRemote.getApiKey(),SabnzbdConstants.DELETE).execute(selectedJobs);
 			break;
 			case PAUSE_ALL:
-				addAllToSelectedPositions();
-				stringBuilder = collectSelectedItems();			
-				selectedJobs = stringBuilder.substring(0, stringBuilder.lastIndexOf(","));
 				new QueueActionTask(this, currentRemote.buildURL(), currentRemote.getApiKey(),SabnzbdConstants.MODE_PAUSE).execute(selectedJobs);
 			break;
 			case PAUSE_SELECTED:
@@ -114,9 +118,6 @@ public class RemoteQueueFragment extends ListFragment implements QueueActionTask
 				new QueueActionTask(this, currentRemote.buildURL(), currentRemote.getApiKey(),SabnzbdConstants.MODE_PAUSE).execute(selectedJobs);
 			break;
 			case RESUME_ALL:
-				addAllToSelectedPositions();
-				stringBuilder = collectSelectedItems();
-				selectedJobs = stringBuilder.substring(0, stringBuilder.lastIndexOf(","));
 				new QueueActionTask(this, currentRemote.buildURL(), currentRemote.getApiKey(),SabnzbdConstants.MODE_RESUME).execute(selectedJobs);
 			break;
 			case RESUME_SELECTED:
@@ -126,17 +127,6 @@ public class RemoteQueueFragment extends ListFragment implements QueueActionTask
 			break;
 		}
 		return super.onOptionsItemSelected(item);
-	}
-
-	/*
-	 * A helper function to add all of the indices of available jobs in the list
-	 * to the list of selected positions. Useful for when we want to do a pause all,
-	 * or resume all
-	 */
-	private void addAllToSelectedPositions() {
-		for(int x = 0; x < getListView().getCount(); x++) {
-			mSelectedPositions.add(x);
-		}
 	}
 
 	private StringBuilder collectSelectedItems() {
@@ -199,9 +189,9 @@ public class RemoteQueueFragment extends ListFragment implements QueueActionTask
 		mJobs.clear();
 		if(data != null) {
 			try {
-				JSONObject object = new JSONObject(data);
-				Log.d("TAG",data.toString());
-				JSONArray array = object.getJSONObject(SabnzbdConstants.MODE_QUEUE).getJSONArray(SabnzbdConstants.SLOTS);
+				JSONObject object = new JSONObject(data).getJSONObject(SabnzbdConstants.MODE_QUEUE);				
+				populateFooterView(object);				
+				JSONArray array = object.getJSONArray(SabnzbdConstants.SLOTS);
 				
 				for(int x = 0; x < array.length(); x++) {
 					mJobs.add(array.getJSONObject(x));
@@ -216,14 +206,21 @@ public class RemoteQueueFragment extends ListFragment implements QueueActionTask
 		}	
 	}
 
+	private void populateFooterView(JSONObject object) throws JSONException {
+		TextView timeleft = (TextView) getView().findViewById(R.id.remote_queue_timeleft);
+		TextView speed = (TextView) getView().findViewById(R.id.remote_queue_speed);
+		
+		speed.setText(object.getString(SabnzbdConstants.SPEED));
+		timeleft.setText(object.getString(SabnzbdConstants.TIMELEFT));
+	}
+
 	@Override
 	public void onQueueDeleteFinished(String result) {
 		try {
 			String status = new JSONObject(result).getString(SabnzbdConstants.STATUS);
 			if(Boolean.parseBoolean(status)){
-				updateRemovedJobs();
+				mListener.onRefreshQueue(null);
 				mSelectedPositions.clear();
-				Toast.makeText(getActivity(), R.string.delete_success, Toast.LENGTH_SHORT).show();
 			}
 			else {
 				Toast.makeText(getActivity(), R.string.generic_error, Toast.LENGTH_SHORT).show();
@@ -239,11 +236,7 @@ public class RemoteQueueFragment extends ListFragment implements QueueActionTask
 		try {
 			String status = new JSONObject(result).getString(SabnzbdConstants.STATUS);
 			if(Boolean.parseBoolean(status)){
-				for(int position : mSelectedPositions) {
-					mJobs.get(position).put(SabnzbdConstants.STATUS, SabnzbdConstants.PAUSED);
-				}
-				Toast.makeText(getActivity(), R.string.pause_successful, Toast.LENGTH_SHORT).show();
-				mAdapter.notifyDataSetChanged();
+				mListener.onRefreshQueue(null);
 				mSelectedPositions.clear();
 			}
 			else {
@@ -260,7 +253,7 @@ public class RemoteQueueFragment extends ListFragment implements QueueActionTask
 		try {
 			String status = new JSONObject(result).getString(SabnzbdConstants.STATUS);
 			if(Boolean.parseBoolean(status)){
-				mListener.onQueueResumeFinished();
+				mListener.onRefreshQueue(null);
 				mSelectedPositions.clear();
 			}
 			else {
@@ -270,23 +263,5 @@ public class RemoteQueueFragment extends ListFragment implements QueueActionTask
 		catch (JSONException e) {
 			e.printStackTrace();
 		}	
-	}
-	
-	/*
-	 * A helper function to update the list of old jobs after a delete
-	 * operation has completed.
-	 */
-	public void updateRemovedJobs() {
-		ArrayList<JSONObject> removeList = new ArrayList<JSONObject>();
-		if(mSelectedPositions.size() > 0) { // Only delete SELECTED jobs
-			for(int position : mSelectedPositions) {
-				removeList.add(mJobs.get(position));
-			}		
-			mJobs.removeAll(removeList);
-		}
-		else { // Delete ALL jobs
-			mJobs.clear();
-		}
-		mAdapter.notifyDataSetChanged();		
 	}		
 }

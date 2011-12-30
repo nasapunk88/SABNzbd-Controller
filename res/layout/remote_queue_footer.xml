@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <TableRow
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <TextView
+            android:layout_weight="1.0"
+            android:gravity="center"
+            android:text="@string/remote_queue_timeleft"
+            android:textColor="#8A8A8A"
+            android:padding="3dip"/>
+        <TextView            
+            android:layout_weight="1.0"
+            android:gravity="center"
+            android:text="@string/remote_queu_speed"
+            android:textColor="#8A8A8A"
+            android:padding="3dip"/> 
+    </TableRow>
+
+		<TableRow
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content">
+        <TextView
+            android:id="@+id/remote_queue_timeleft"
+            android:layout_weight="1.0"
+            android:gravity="center"
+            android:padding="3dip"
+            android:textColor="#8A8A8A"/>
+        <TextView
+            android:id="@+id/remote_queue_speed"
+            android:layout_weight="1.0"
+            android:gravity="center"
+            android:padding="3dip"
+            android:textColor="#8A8A8A"/>
+		</TableRow>
+</TableLayout>
