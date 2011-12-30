@@ -14,6 +14,7 @@ import android.support.v4.view.ViewPager.OnPageChangeListener;
 import android.view.View;
 import android.widget.TabHost;
 import android.widget.TabHost.OnTabChangeListener;
+import android.widget.TextView;
 
 import com.gmail.at.faint545.HistoryDownloadTask;
 import com.gmail.at.faint545.HistoryDownloadTask.HistoryDownloadTaskListener;
@@ -75,8 +76,11 @@ public class RemoteDetailsActivity extends FragmentActivity implements DataDownl
 		mViewPager = (ViewPager) findViewById(R.id.remote_details_pager);
 		mTabsAdapter = new TabsAdapter(this, mTabHost, mViewPager);
 		
-		View queueIndicator = getLayoutInflater().inflate(R.layout.queue_tab_indicator, null);
-		View historyIndicator = getLayoutInflater().inflate(R.layout.history_tab_indicator, null);
+		TextView queueIndicator = (TextView) getLayoutInflater().inflate(R.layout.tab_indicator, null);
+		TextView historyIndicator = (TextView) getLayoutInflater().inflate(R.layout.tab_indicator, null);
+		
+		queueIndicator.setText(R.string.queue_tab_title);
+		historyIndicator.setText(R.string.history_tab_title);
 		
 		mTabsAdapter.add(mTabHost.newTabSpec("queue").setIndicator(queueIndicator),new RemoteQueueFragment(),null);
 		mTabsAdapter.add(mTabHost.newTabSpec("history").setIndicator(historyIndicator),new RemoteHistoryFragment(),null);
