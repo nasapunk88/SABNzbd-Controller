@@ -1,9 +1,12 @@
 package com.gmail.at.faint545.activities;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
@@ -23,46 +26,29 @@ import com.gmail.at.faint545.zxing.IntentIntegrator;
 import com.gmail.at.faint545.zxing.IntentResult;
 
 public class ControllerActivity extends FragmentActivity implements NewRemoteListener, RemoteFragmentListener {
-	private ArrayList<Remote> remotes = new ArrayList<Remote>(); // A list of user defined remotes
+	private static ArrayList<Remote> remotes = new ArrayList<Remote>(); // A list of user defined remotes
 	
-	private RemoteFragment remoteFragment; // Fragment for viewing remotes
+	private static RemoteFragment remoteFragment; // Fragment for viewing remotes
 	private NewRemoteFragment newRemoteFragment; // Fragment for creating a remote
+	
+	public static final int DELETE_REMOTE = 0x301, LOAD_REMOTE = DELETE_REMOTE >> 1;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
+    	fetchRemotes();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         BugSenseHandler.setup(this, "42fc347a");
-        getSupportActionBar().setDisplayShowHomeEnabled(false); // Remove activity/application icon                        
-        fetchRemotes();
+        getSupportActionBar().setDisplayShowHomeEnabled(false); // Remove activity/application icon
         attachFragment(remoteFragment = RemoteFragment.newInstance(remotes)); // Attach RemoteFragment to this activity
     }
 
 	/*
-     * Obtain all SABNzbd remote profiles from the local data store.
+     * Obtain all SABNzbd remote profiles from the local data store. Do this as a background task
+     * to avoid ANR dialogs.
      */
-	private void fetchRemotes() {		
-		RemoteDatabase db = new RemoteDatabase(this);		
-		db.open();
-		Cursor cur = db.getAllRows();
-		
-		if(remotes.size() < cur.getCount()) { // If a new remote has been added, move to that remote in the database
-			cur.moveToPosition(remotes.size()-1);
-		}
-		else { // A remote has been updated
-			remotes.clear();
-		}
-		
-		while(cur.moveToNext()) { // Collect all columns from each row and process it
-			String id = cur.getString(RemoteDatabase.ID_INDEX);
-			String name = cur.getString(RemoteDatabase.NAME_INDEX);
-			String address = cur.getString(RemoteDatabase.ADDR_INDEX);
-			String port = cur.getString(RemoteDatabase.PORT_INDEX);
-			String apiKey = cur.getString(RemoteDatabase.API_KEY_INDEX);
-			remotes.add(new Remote(name).setAddress(address).setPort(port).setApiKey(apiKey).setId(id));
-		}
-		cur.close();
-		db.close();
+	private void fetchRemotes() {
+		new DatabaseTask(this).execute(LOAD_REMOTE);
 	}
 
 	/*
@@ -141,14 +127,63 @@ public class ControllerActivity extends FragmentActivity implements NewRemoteLis
 	 */
 	@Override
 	public void onDeleteRemote(int position) {
-		RemoteDatabase db = new RemoteDatabase(this);
-		db.open();
-		long result = db.delete(Integer.parseInt(remotes.get(position).getId()));
-		db.close();
-		if(result > 0) {
-			remotes.remove(position);
-			remoteFragment.notifyDataSetChanged();			
-			Toast.makeText(this, "Delete successful!", Toast.LENGTH_SHORT).show();
-		}				
+		new DatabaseTask(this).execute(DELETE_REMOTE,position);
+	}
+	
+	static class DatabaseTask extends AsyncTask<Integer, Void, Long> {
+		private WeakReference<Activity> mWeakContext;
+		private int request,position;
+				
+		public DatabaseTask(Activity context) {
+			mWeakContext = new WeakReference<Activity>(context);
+		}
+		
+		@Override
+		protected Long doInBackground(Integer... params) {
+			request = params[0];
+			RemoteDatabase db = new RemoteDatabase(mWeakContext.get());
+			db.open();
+			switch(request) {
+				case DELETE_REMOTE:
+					position = params[1];
+					long result = db.delete(Integer.parseInt(remotes.get(position).getId()));
+					db.close();
+					return result;
+				case LOAD_REMOTE:
+					Cursor cur = db.getAllRows();
+					
+					if(remotes.size() < cur.getCount()) // If a new remote has been added, move to that remote in the database
+						cur.moveToPosition(remotes.size()-1);
+					else // A remote has been updated
+						remotes.clear();
+					
+					while(cur.moveToNext()) { // Collect all columns from each row and process it
+						String id = cur.getString(RemoteDatabase.ID_INDEX);
+						String name = cur.getString(RemoteDatabase.NAME_INDEX);
+						String address = cur.getString(RemoteDatabase.ADDR_INDEX);
+						String port = cur.getString(RemoteDatabase.PORT_INDEX);
+						String apiKey = cur.getString(RemoteDatabase.API_KEY_INDEX);
+						remotes.add(new Remote(name).setAddress(address).setPort(port).setApiKey(apiKey).setId(id));
+					}
+					cur.close();
+					db.close();
+				break;
+			}
+			return null;
+		}
+
+		@Override
+		protected void onPostExecute(Long result) {
+			switch(request) {
+				case DELETE_REMOTE:
+					if(result > 0) {
+						remotes.remove(position);
+						Toast.makeText(mWeakContext.get(), "Delete successful!", Toast.LENGTH_SHORT).show();
+					}
+				break;
+			}
+			if(remoteFragment != null) remoteFragment.notifyDataSetChanged();
+			super.onPostExecute(result);
+		}		
 	}
 }

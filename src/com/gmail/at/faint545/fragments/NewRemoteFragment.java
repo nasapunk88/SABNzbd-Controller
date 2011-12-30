@@ -1,5 +1,7 @@
 package com.gmail.at.faint545.fragments;
 
+import android.app.Activity;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.SupportActivity;
@@ -135,24 +137,37 @@ public class NewRemoteFragment extends Fragment {
 	}
 	
 	private void saveToDatabase(String nickname, String address, String port, String apiKey) {
-		RemoteDatabase database = new RemoteDatabase(getActivity());
-		database.open();
-		long result;
-		if(mRemote != null) {
-			result = database.update(Integer.parseInt(mRemote.getId()), nickname, address, port, apiKey);
-		}
-		else {
-			result = database.insert(nickname, address, port, apiKey);
-		}
-		if(result != -1) {
-			database.close();
-			Toast.makeText(getActivity(), "Save successful!", Toast.LENGTH_SHORT).show();
-			remoteListener.onRemoteSaved();
-		}
-		else {
-			database.close();
-			Toast.makeText(getActivity(), "Save failed!", Toast.LENGTH_SHORT).show();
-		}
+		new AsyncTask<String, Void, Long>(){
+			RemoteDatabase database;
+			@Override
+			protected void onPreExecute() {
+				database = new RemoteDatabase(getActivity());
+				super.onPreExecute();
+			}
+
+			@Override
+			protected Long doInBackground(String... params) {
+				String nickname = params[0], address = params[1],
+					   port = params[2], apiKey = params[3];
+				database.open();
+				long result = (mRemote != null) ? database.update(Integer.parseInt(mRemote.getId()), nickname, address, port, apiKey) : database.insert(nickname, address, port, apiKey);
+				database.close();
+				return result;
+			}
+
+			@Override
+			protected void onPostExecute(Long result) {
+				if(result != -1) {
+					Toast.makeText(getActivity(), "Save successful!", Toast.LENGTH_SHORT).show();
+					remoteListener.onRemoteSaved();
+				}
+				else {
+					Toast.makeText(getActivity(), "Save failed!", Toast.LENGTH_SHORT).show();
+				}
+				super.onPostExecute(result);
+			}
+			
+		}.execute(nickname,address,port,apiKey);
 	}
 
 	private void setupViews() {
