@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="horizontal">
@@ -9,27 +9,23 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:clickable="false"
-        android:focusable="false"/>    
-       
-    <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_weight="1.0"
-        android:padding="6dp">       
+        android:focusable="false" />
         
-		    <TextView android:id="@+id/remote_history_row_filename"
-		        android:layout_width="fill_parent"
-		        android:layout_height="wrap_content"
-		        android:text="Sample Filename"
-		        android:textColor="@color/black"
-		        android:textAppearance="@android:style/TextAppearance.Medium"/>
+    <TextView android:id="@+id/remote_history_row_filename"
+        android:layout_width="match_parent"
+		    android:layout_height="wrap_content"
+		    android:layout_toRightOf="@id/remote_history_checkbox"
+		    android:text="Sample Filename"
+		    android:textColor="@color/black"
+		    android:textAppearance="@android:style/TextAppearance.Medium"/>
 		    
-		    <TextView android:id="@+id/remote_history_row_status"
-		        android:layout_width="wrap_content"
-		        android:layout_height="wrap_content"
-		        android:text="failed/completed"
-		        android:textColor="@color/black"
-		        android:textAppearance="@android:style/TextAppearance.Small"/>
-    </LinearLayout>
-</LinearLayout>
+		<TextView android:id="@+id/remote_history_row_status"
+		    android:layout_width="match_parent"
+		    android:layout_height="wrap_content"
+		    android:layout_below="@id/remote_history_row_filename"
+		    android:layout_toRightOf="@id/remote_history_checkbox"
+		    android:text="completed"
+		    android:textColor="@color/black"
+		    android:textAppearance="@android:style/TextAppearance.Small"/>
+    
+</RelativeLayout>

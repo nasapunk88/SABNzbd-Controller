@@ -3,7 +3,8 @@ package com.gmail.at.faint545;
 public interface SabnzbdConstants {
 	public final static String OUTPUT_JSON = "json",
 							   OUTPUT_XML = "xml",
-							   MODE_QUEUE = "qstatus",
+							   MODE_QSTATUS = "qstatus",
+							   MODE_QUEUE = "queue",
 							   MODE_HISTORY = "history",
 							   MODE_VERSION = "version",
 							   MODE_WARNINGS = "warnings",
@@ -13,6 +14,7 @@ public interface SabnzbdConstants {
 							   MODE_PAUSE = "pause",
 							   MODE_RESUME = "resume",
 							   MODE_SHUTDOWN = "shutdown",
+							   MODE_RETRY = "retry",
 							   STATUS_COMPLETED = "Completed",
 							   STATUS_FAILED = "Failed";
 	
@@ -29,5 +31,10 @@ public interface SabnzbdConstants {
 							   DELETE = "delete",
 							   VALUE = "value",
 							   NZOID = "nzo_id",
+							   ID = "id",
 							   ALL = "all";
+	
+	public final static String PAUSED = "Paused",
+							   DOWNLOADING = "Downloading",
+							   QUEUED = "Queued";
 }

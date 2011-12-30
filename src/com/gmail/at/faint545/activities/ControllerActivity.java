@@ -11,6 +11,7 @@ import android.support.v4.app.FragmentTransaction;
 import android.view.View;
 import android.widget.Toast;
 
+import com.bugsense.trace.BugSenseHandler;
 import com.gmail.at.faint545.R;
 import com.gmail.at.faint545.Remote;
 import com.gmail.at.faint545.databases.RemoteDatabase;
@@ -25,35 +26,17 @@ public class ControllerActivity extends FragmentActivity implements NewRemoteLis
 	private ArrayList<Remote> remotes = new ArrayList<Remote>(); // A list of user defined remotes
 	
 	private RemoteFragment remoteFragment; // Fragment for viewing remotes
-	private NewRemoteFragment newRemoteFragment;
+	private NewRemoteFragment newRemoteFragment; // Fragment for creating a remote
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.main);        
+        setContentView(R.layout.main);
+        BugSenseHandler.setup(this, "42fc347a");
         getSupportActionBar().setDisplayShowHomeEnabled(false); // Remove activity/application icon                        
         fetchRemotes();
-        //fetchFalseRemotes();
         attachFragment(remoteFragment = RemoteFragment.newInstance(remotes)); // Attach RemoteFragment to this activity
     }
-
-    /*
-     * Specifically used for testing purposes
-     */
-    private void fetchFalseRemotes() {
-    	remotes.add(new Remote("Remote1").setAddress("localhost").setPort("1000"));
-    	remotes.add(new Remote("Remote2").setAddress("localhost").setPort("1000"));
-    	remotes.add(new Remote("Remote3").setAddress("localhost").setPort("1000"));
-    	remotes.add(new Remote("Remote4").setAddress("localhost").setPort("1000"));
-    	remotes.add(new Remote("Remote5").setAddress("localhost").setPort("1000"));
-    	remotes.add(new Remote("Remote6").setAddress("localhost").setPort("1000"));
-    	remotes.add(new Remote("Remote7").setAddress("localhost").setPort("1000"));
-    	remotes.add(new Remote("Remote8").setAddress("localhost").setPort("1000"));
-    	remotes.add(new Remote("Remote9").setAddress("localhost").setPort("1000"));
-    	remotes.add(new Remote("Remote10").setAddress("localhost").setPort("1000"));
-    	remotes.add(new Remote("Remote11").setAddress("localhost").setPort("1000"));
-    	remotes.add(new Remote("Remote12").setAddress("localhost").setPort("1000"));
-	}
 
 	/*
      * Obtain all SABNzbd remote profiles from the local data store.
@@ -114,9 +97,7 @@ public class ControllerActivity extends FragmentActivity implements NewRemoteLis
 		integrator.initiateScan();
 	}
 	
-	/////////////////////////////////////
-	// Some callbacks...
-	////////////////////////////////////
+	// Below here are callback functions
 	
 	/*
 	 * This function is called when a remote has been saved

@@ -57,8 +57,8 @@ public class Remote implements Parcelable {
 	}
 	
 	public String buildURL() {
-		//http://localhost:8080/api?apikey=
-		return getHost() + "/" + "api?";
+		//http://localhost:8080/sabnzbd/api?apikey=
+		return getHost() + "/" + "sabnzbd/api?";
 	}
 	
 	/*

@@ -17,5 +17,11 @@
     <string name="queue_tab_title">QUEUE</string>
     <string name="history_tab_title">HISTORY</string>
     <string name="divide"> / </string>
+    <string name="connect_error">There was an error. Please check your connection and try again.</string>
+    <string name="try_again">Try again</string>
+    <string name="ok">OK</string>
+    <string name="delete_success">Delete successful</string>
+    <string name="generic_error">There was an error</string>
+    <string name="pause_successful">Pause successful</string>
 
 </resources>

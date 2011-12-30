@@ -23,8 +23,8 @@ import com.gmail.at.faint545.R;
 import com.gmail.at.faint545.Remote;
 import com.gmail.at.faint545.fragments.RemoteHistoryFragment;
 import com.gmail.at.faint545.fragments.RemoteHistoryFragment.RemoteHistoryListener;
-import com.gmail.at.faint545.fragments.RemoteQueueFragment.RemoteQueueListener;
 import com.gmail.at.faint545.fragments.RemoteQueueFragment;
+import com.gmail.at.faint545.fragments.RemoteQueueFragment.RemoteQueueListener;
 import com.handmark.pulltorefresh.library.PullToRefreshListView;
 
 public class RemoteDetailsActivity extends FragmentActivity implements DataDownloadTaskListener,
@@ -36,7 +36,7 @@ public class RemoteDetailsActivity extends FragmentActivity implements DataDownl
 	private TabsAdapter mTabsAdapter;
 	private Remote mRemote;
 	private AlertDialog errorDialog;
-	private PullToRefreshListView mHistoryPtrView,mQueuePtrView;
+	private final static int QUEUE_INDEX = 0, HISTORY_INDEX = 1;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -52,17 +52,17 @@ public class RemoteDetailsActivity extends FragmentActivity implements DataDownl
 	 * the queue and history
 	 */
 	private void downloadData() {
-		downloadQueue();
-		downloadHistory();
+		downloadQueue(null);
+		downloadHistory(null);
 		errorDialog = buildAlertDialog();
 	}
 	
-	private void downloadQueue() {
-		new QueueDownloadTask(this, mRemote.buildURL(),mRemote.getApiKey(),mQueuePtrView).execute();
+	private void downloadQueue(PullToRefreshListView usePtr) {
+		new QueueDownloadTask(this, mRemote.buildURL(),mRemote.getApiKey(),usePtr).execute();
 	}
 	
-	private void downloadHistory() {
-		new HistoryDownloadTask(this, mRemote.buildURL(), mRemote.getApiKey(),mHistoryPtrView).execute();
+	private void downloadHistory(PullToRefreshListView usePtr) {
+		new HistoryDownloadTask(this, mRemote.buildURL(), mRemote.getApiKey(),usePtr).execute();
 	}
 
 	/*
@@ -159,7 +159,7 @@ public class RemoteDetailsActivity extends FragmentActivity implements DataDownl
 	}
 
 	/*
-	 * A callback function for when the queue has finished downloading. #ref: QueueDownloadTask.java
+	 * A callback function for when the queue has finished downloading. Refers to: QueueDownloadTask.java
 	 */
 	@Override
 	public void onQueueDownloadFinished(String result) {
@@ -171,12 +171,12 @@ public class RemoteDetailsActivity extends FragmentActivity implements DataDownl
 		else {
 			Bundle arguments = new Bundle();
 			arguments.putString("data", result);			
-			mTabsAdapter.getItem(0).setArguments(arguments);
+			mTabsAdapter.getItem(QUEUE_INDEX).setArguments(arguments);
 		}
 	}
 	
 	/*
-	 * A callback function for when the history has finished downloading. #ref: HistoryDownloadTask.java  
+	 * A callback function for when the history has finished downloading. Refers to: HistoryDownloadTask.java  
 	 */
 	@Override
 	public void onHistoryDownloadFinished(String result) {
@@ -188,24 +188,40 @@ public class RemoteDetailsActivity extends FragmentActivity implements DataDownl
 		else {
 			Bundle arguments = new Bundle();
 			arguments.putString("data", result);
-			mTabsAdapter.getItem(1).setArguments(arguments);
+			mTabsAdapter.getItem(HISTORY_INDEX).setArguments(arguments);
 		}
 	}
+	
+	/*
+	 * A callback function for when a user "pulls-to-refresh" on the History tab. Refers to: RemoteHistoryFragment.java
+	 */
+	@Override
+	public void onRefreshHistory(PullToRefreshListView view) {
+		downloadHistory(view);
+	}
 
+	/*
+	 * A callback function for when a user "pulls-to-refresh" on the Queue tab. Refers to: RemoteQueueFragment.java
+	 */	
+	@Override
+	public void onRefreshQueue(PullToRefreshListView view) {
+		downloadQueue(view);
+	}
+	
 	/*
 	 * A helper function to build an alert/error dialog
 	 */
 	private AlertDialog buildAlertDialog() {
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		builder.setMessage("There was an error. Please check your connection and try again.");
+		builder.setMessage(R.string.connect_error);
 		builder.setCancelable(false);
-		builder.setPositiveButton("Try Again", new DialogInterface.OnClickListener() {				
+		builder.setPositiveButton(R.string.try_again, new DialogInterface.OnClickListener() {				
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				downloadData();
 			}
 		});
-		builder.setNegativeButton("OK", new DialogInterface.OnClickListener() {
+		builder.setNegativeButton(R.string.ok, new DialogInterface.OnClickListener() {
 			
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
@@ -214,19 +230,9 @@ public class RemoteDetailsActivity extends FragmentActivity implements DataDownl
 		});			
 		return builder.create();
 	}
-	
-	/*
-	 * A callback function for when a user "pulls-to-refresh" on the History tab. #ref: RemoteHistoryFragment.java
-	 */
-	@Override
-	public void onRefreshHistory(PullToRefreshListView view) {
-		mHistoryPtrView = view;
-		downloadHistory();
-	}
 
 	@Override
-	public void onRefreshQueue(PullToRefreshListView view) {
-		mQueuePtrView = view;
-		downloadQueue();
-	}
+	public void onQueueResumeFinished() {
+		downloadQueue(null);
+	}	
 }

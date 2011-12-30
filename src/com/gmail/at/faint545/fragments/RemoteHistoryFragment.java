@@ -19,8 +19,8 @@ import android.widget.CheckBox;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import com.gmail.at.faint545.DeleteHistoryTask;
-import com.gmail.at.faint545.DeleteHistoryTask.HistoryDeleteTaskListener;
+import com.gmail.at.faint545.HistoryActionTask;
+import com.gmail.at.faint545.HistoryActionTask.HistoryActionTaskListener;
 import com.gmail.at.faint545.R;
 import com.gmail.at.faint545.Remote;
 import com.gmail.at.faint545.SabnzbdConstants;
@@ -28,7 +28,7 @@ import com.gmail.at.faint545.adapters.RemoteHistoryAdapter;
 import com.handmark.pulltorefresh.library.PullToRefreshBase.OnRefreshListener;
 import com.handmark.pulltorefresh.library.PullToRefreshListView;
 
-public class RemoteHistoryFragment extends ListFragment implements HistoryDeleteTaskListener {
+public class RemoteHistoryFragment extends ListFragment implements HistoryActionTaskListener {
 	private RemoteHistoryAdapter mAdapter;
 	private ArrayList<JSONObject> mOldJobs = new ArrayList<JSONObject>();
 	private ArrayList<Integer> mSelectedPositions = new ArrayList<Integer>();
@@ -55,6 +55,7 @@ public class RemoteHistoryFragment extends ListFragment implements HistoryDelete
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,Bundle savedInstanceState) {
+		ViewGroup parent = (ViewGroup) getActivity().findViewById(R.id.remote_details_pager);
 		return inflater.inflate(R.layout.remote_history, null);
 	}
 
@@ -95,59 +96,43 @@ public class RemoteHistoryFragment extends ListFragment implements HistoryDelete
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch(item.getItemId()) {
-		case DELETE_ALL:
-			onHistoryDelete(null);
+			case DELETE_ALL: // Conditional for deleting all history
+				deleteHistory(null);
 			break;
-		case DELETE_SELECTED:
-			StringBuilder selectedJobs = new StringBuilder();
-			// Create a string of jobs to delete, separated by commas i.e: job1,job2,job3
-			for(int position : mSelectedPositions) {				
-				JSONObject job = mOldJobs.get(position);
-				try {
-					String id = job.getString(SabnzbdConstants.NZOID);
-					selectedJobs.append(id).append(",");
-				} 
-				catch (JSONException e) {
-					e.printStackTrace();
-				}
-			}
-			onHistoryDelete(selectedJobs.substring(0, selectedJobs.lastIndexOf(","))); // Chop off the last comma
+			case DELETE_SELECTED: // Conditional for deleting selected items
+				StringBuilder selectedJobs = collectSelectedItems();
+				deleteHistory(selectedJobs.substring(0, selectedJobs.lastIndexOf(","))); // Chop off the last comma
 			break;
 		}
 		return super.onOptionsItemSelected(item);
 	}
 	
 	/*
-	 * A function for when a user selects to delete a specific or all jobs. #ref: RemoteHistoryFragment.java
+	 * A helper function to collect all the NZO IDs of all selected items/jobs
 	 */
-	public void onHistoryDelete(String selectedJobs) {
-		Remote currentRemote = getActivity().getIntent().getParcelableExtra("selected_remote");
-		if(selectedJobs == null) {
-			new DeleteHistoryTask(this, currentRemote.buildURL(), currentRemote.getApiKey()).execute();
+	private StringBuilder collectSelectedItems() {
+		StringBuilder selectedJobs = new StringBuilder();
+		// Create a string of jobs to delete, separated by commas i.e: job1,job2,job3
+		for(int position : mSelectedPositions) {				
+			JSONObject job = mOldJobs.get(position);
+			try {
+				String id = job.getString(SabnzbdConstants.NZOID);
+				selectedJobs.append(id).append(",");
+			} 
+			catch (JSONException e) {
+				e.printStackTrace();
+			}
 		}
-		else {
-			new DeleteHistoryTask(this, currentRemote.buildURL(), currentRemote.getApiKey()).execute(selectedJobs);
-		}
-	}	
+		return selectedJobs;
+	}
 	
 	/*
-	 * A helper function to update the list of old jobs after a delete
-	 * operation has completed.
+	 * A function for when a user selects to delete a specific or all jobs. Refers to: RemoteHistoryFragment.java
 	 */
-	public void updateRemovedJobs() {
-		ArrayList<JSONObject> removeList = new ArrayList<JSONObject>();
-		if(mSelectedPositions.size() > 0) { // Only delete SELECTED jobs
-			for(int position : mSelectedPositions) {
-				removeList.add(mOldJobs.get(position));
-			}		
-			mOldJobs.removeAll(removeList);
-		}
-		else { // Delete ALL jobs
-			mOldJobs.clear();
-		}
-		mAdapter.notifyDataSetChanged();
-		mSelectedPositions.clear();
-	}
+	public void deleteHistory(String selectedJobs) {
+		Remote currentRemote = getActivity().getIntent().getParcelableExtra("selected_remote");
+		new HistoryActionTask(this, currentRemote.buildURL(), currentRemote.getApiKey(),SabnzbdConstants.DELETE).execute(selectedJobs);
+	}	
 
 	/*
 	 * A helper function to setup the list adapter
@@ -207,7 +192,7 @@ public class RemoteHistoryFragment extends ListFragment implements HistoryDelete
 	}
 	
 	/*
-	 * A callback function for when the delete operation has completed. #ref: DeleteHistoryTask.java
+	 * A callback function for when the delete operation has completed. Refers to: DeleteHistoryTask.java
 	 */
 	@Override
 	public void onHistoryDeleteFinished(String result) {
@@ -215,14 +200,38 @@ public class RemoteHistoryFragment extends ListFragment implements HistoryDelete
 			String status = new JSONObject(result).getString(SabnzbdConstants.STATUS);
 			if(Boolean.parseBoolean(status)) {
 				updateRemovedJobs();
-				Toast.makeText(getActivity(), "Delete successful.", Toast.LENGTH_SHORT).show();				
+				Toast.makeText(getActivity(), R.string.delete_success, Toast.LENGTH_SHORT).show();
 			}
 			else {
-				Toast.makeText(getActivity(), "There was an error.", Toast.LENGTH_SHORT).show();
+				Toast.makeText(getActivity(), R.string.generic_error, Toast.LENGTH_SHORT).show();
 			}
 		} 
 		catch (JSONException e) {
-			Toast.makeText(getActivity(), "There was an error.", Toast.LENGTH_SHORT).show();
+			Toast.makeText(getActivity(), R.string.generic_error, Toast.LENGTH_SHORT).show();
 		}
-	}	
+	}
+
+	@Override
+	public void onHistoryRetryFinished(String result) {
+		// TODO Auto-generated method stub		
+	}
+	
+	/*
+	 * A helper function to update the list of old jobs after a delete
+	 * operation has completed.
+	 */
+	public void updateRemovedJobs() {
+		ArrayList<JSONObject> removeList = new ArrayList<JSONObject>();
+		if(mSelectedPositions.size() > 0) { // Only delete SELECTED jobs
+			for(int position : mSelectedPositions) {
+				removeList.add(mOldJobs.get(position));
+			}		
+			mOldJobs.removeAll(removeList);
+		}
+		else { // Delete ALL jobs
+			mOldJobs.clear();
+		}
+		mAdapter.notifyDataSetChanged();
+		mSelectedPositions.clear();
+	}		
 }
