@@ -7,6 +7,7 @@ import org.json.JSONObject;
 
 import android.app.Activity;
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +16,7 @@ import android.widget.TextView;
 
 import com.gmail.at.faint545.R;
 import com.gmail.at.faint545.SabnzbdConstants;
+import com.gmail.at.faint545.StringUtils;
 
 public class RemoteQueueAdapter extends ArrayAdapter<JSONObject> {
 	private Context mContext;
@@ -46,7 +48,9 @@ public class RemoteQueueAdapter extends ArrayAdapter<JSONObject> {
 			ViewHolder viewHolder = (ViewHolder) convertView.getTag();
 			try {
 				String statusText = job.getString(SabnzbdConstants.STATUS);
-				jobProgress.append(job.getString(SabnzbdConstants.MBLEFT)).append(" / ").append(job.getString(SabnzbdConstants.MB));
+				Log.d("WTF",job.toString());
+				String mbLeft = StringUtils.normalizeSize(job.getString(SabnzbdConstants.MBLEFT), "m");
+				jobProgress.append(mbLeft).append(" left");
 				
 				viewHolder.filename.setText(job.getString(SabnzbdConstants.FILENAME));
 				viewHolder.progress.setText(jobProgress.toString());
