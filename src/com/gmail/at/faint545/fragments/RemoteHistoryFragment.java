@@ -35,7 +35,7 @@ public class RemoteHistoryFragment extends ListFragment implements HistoryAction
 	private RemoteHistoryListener mListener;
 	private PullToRefreshListView mPtrView;
 	
-	public final static int DELETE_ALL = 0x123, DELETE_SELECTED = DELETE_ALL >> 1;
+	public final static int DELETE = 0x123;
 	
 	public interface RemoteHistoryListener {
 		public void onRefreshHistory(PullToRefreshListView view);
@@ -84,23 +84,23 @@ public class RemoteHistoryFragment extends ListFragment implements HistoryAction
 		menu.clear();
 		// Only show these two options if there are jobs to delete
 		if(mSelectedPositions.size() > 0 && mOldJobs.size() > 0) {
-			menu.add(Menu.NONE,DELETE_SELECTED,Menu.NONE,"Delete selected");
+			menu.add(Menu.NONE,DELETE,Menu.NONE,"Delete selected");
 		}
 		else if(mOldJobs.size() > 0){
-			menu.add(Menu.NONE,DELETE_ALL,Menu.NONE,"Delete all");
+			menu.add(Menu.NONE,DELETE,Menu.NONE,"Delete all");
 		}
 		super.onPrepareOptionsMenu(menu);
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
+		String selectedJobs = null;
+		if(mSelectedPositions.size() > 0) {
+			selectedJobs = collectSelectedItems();
+		}
 		switch(item.getItemId()) {
-			case DELETE_ALL: // Conditional for deleting all history
-				deleteHistory(null);
-			break;
-			case DELETE_SELECTED: // Conditional for deleting selected items
-				StringBuilder selectedJobs = collectSelectedItems();
-				deleteHistory(selectedJobs.substring(0, selectedJobs.lastIndexOf(","))); // Chop off the last comma
+			case DELETE: // Conditional for deleting all history
+				deleteHistory(selectedJobs);
 			break;
 		}
 		return super.onOptionsItemSelected(item);
@@ -109,8 +109,9 @@ public class RemoteHistoryFragment extends ListFragment implements HistoryAction
 	/*
 	 * A helper function to collect all the NZO IDs of all selected items/jobs
 	 */
-	private StringBuilder collectSelectedItems() {
-		StringBuilder selectedJobs = new StringBuilder();
+	private String collectSelectedItems() {
+		StringBuilder selectedJobs;
+		selectedJobs = new StringBuilder();
 		// Create a string of jobs to delete, separated by commas i.e: job1,job2,job3
 		for(int position : mSelectedPositions) {				
 			JSONObject job = mOldJobs.get(position);
@@ -122,7 +123,7 @@ public class RemoteHistoryFragment extends ListFragment implements HistoryAction
 				e.printStackTrace();
 			}
 		}
-		return selectedJobs;
+		return selectedJobs.substring(0, selectedJobs.lastIndexOf(","));
 	}
 	
 	/*
@@ -130,7 +131,7 @@ public class RemoteHistoryFragment extends ListFragment implements HistoryAction
 	 */
 	public void deleteHistory(String selectedJobs) {
 		Remote currentRemote = getActivity().getIntent().getParcelableExtra("selected_remote");
-		new HistoryActionTask(this, currentRemote.buildURL(), currentRemote.getApiKey(),SabnzbdConstants.DELETE).execute(selectedJobs);
+		new HistoryActionTask(this, currentRemote.buildURL(), currentRemote.getApiKey(),HistoryActionTask.DELETE).execute(selectedJobs);
 	}	
 
 	/*

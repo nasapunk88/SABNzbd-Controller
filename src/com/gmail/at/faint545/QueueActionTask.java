@@ -26,8 +26,14 @@ import android.support.v4.app.Fragment;
 
 public class QueueActionTask extends AsyncTask<String, Void, String> {
 	private ProgressDialog progressDialog;
-	private String url,api,request;
+	private String url,api;
+	private int request;
 	private Fragment fragment;
+	
+	public final static int DELETE = 0x11;
+	public final static int PAUSE = DELETE >> 1;
+	public final static int RESUME = PAUSE >> 1;
+	public final static int SPEEDLIMIT = RESUME >> 1;
 	
 	public interface QueueActionTaskListener {
 		public void onQueueDeleteFinished(String result);
@@ -36,7 +42,7 @@ public class QueueActionTask extends AsyncTask<String, Void, String> {
 		public void onSpeedLimitFinished(String result);
 	}
 	
-	public QueueActionTask(Fragment fragment,String url,String api,String request) {
+	public QueueActionTask(Fragment fragment,String url,String api,int request) {
 		this.fragment = fragment;
 		this.url = url;
 		this.request = request;
@@ -45,17 +51,19 @@ public class QueueActionTask extends AsyncTask<String, Void, String> {
 	
 	@Override
 	protected void onPreExecute() {
-		if(request.equalsIgnoreCase(SabnzbdConstants.DELETE)) {
-			progressDialog = ProgressDialog.show(fragment.getActivity(), null, "Deleting download(s)");
-		}
-		else if(request.equalsIgnoreCase(SabnzbdConstants.MODE_PAUSE)) {
-			progressDialog = ProgressDialog.show(fragment.getActivity(), null, "Pausing download(s)");
-		}
-		else if(request.equalsIgnoreCase(SabnzbdConstants.MODE_RESUME)) {
-			progressDialog = ProgressDialog.show(fragment.getActivity(), null, "Resuming download(s)");
-		}
-		else if(request.equalsIgnoreCase(SabnzbdConstants.SPEEDLIMIT)) {
-			progressDialog = ProgressDialog.show(fragment.getActivity(), null, "Setting speed limit");
+		switch(request) {
+			case DELETE:
+				progressDialog = ProgressDialog.show(fragment.getActivity(), null, "Deleting download(s)");
+			break;
+			case PAUSE:
+				progressDialog = ProgressDialog.show(fragment.getActivity(), null, "Pausing download(s)");
+			break;
+			case RESUME:
+				progressDialog = ProgressDialog.show(fragment.getActivity(), null, "Resuming download(s)");
+			break;
+			case SPEEDLIMIT:
+				progressDialog = ProgressDialog.show(fragment.getActivity(), null, "Setting speed limit");
+			break;
 		}
 		super.onPreExecute();
 	}
@@ -64,19 +72,23 @@ public class QueueActionTask extends AsyncTask<String, Void, String> {
 	protected String doInBackground(String... params) {
 		HttpClient httpClient = new DefaultHttpClient();
 		HttpPost httpRequest = new HttpPost(url);
-		ArrayList<NameValuePair> arguments = null;
+		ArrayList<NameValuePair> arguments = new ArrayList<NameValuePair>();
+		arguments.add(new BasicNameValuePair(SabnzbdConstants.APIKEY, api));
+		arguments.add(new BasicNameValuePair(SabnzbdConstants.OUTPUT, SabnzbdConstants.OUTPUT_JSON));		
 		
-		if(request.equalsIgnoreCase(SabnzbdConstants.DELETE)) {
-			arguments = prepareForDelete(params);
-		}
-		else if(request.equalsIgnoreCase(SabnzbdConstants.MODE_PAUSE)) {
-			arguments = prepareForPause(params);
-		}
-		else if(request.equalsIgnoreCase(SabnzbdConstants.MODE_RESUME)) {
-			arguments = prepareForResume(params);
-		}
-		else if(request.equalsIgnoreCase(SabnzbdConstants.SPEEDLIMIT)) {
-			arguments = prepareForSpeedLimit(params);
+		switch(request) {
+			case DELETE:
+				prepareForDelete(arguments,params);
+			break;
+			case PAUSE:
+				prepareForPause(arguments,params);
+			break;
+			case RESUME:
+				prepareForResume(arguments,params);
+			break;
+			case SPEEDLIMIT:
+				prepareForSpeedLimit(arguments,params);
+			break;
 		}
 		
 		try {
@@ -106,14 +118,20 @@ public class QueueActionTask extends AsyncTask<String, Void, String> {
 	@Override
 	protected void onPostExecute(String result) {
 		QueueActionTaskListener listener = (QueueActionTaskListener) fragment;
-		if(request.equalsIgnoreCase(SabnzbdConstants.DELETE))
-			listener.onQueueDeleteFinished(result);
-		else if(request.equalsIgnoreCase(SabnzbdConstants.MODE_PAUSE))
-			listener.onQueuePauseFinished(result);
-		else if(request.equalsIgnoreCase(SabnzbdConstants.MODE_RESUME))
-			listener.onQueueResumeFinished(result);
-		else if(request.equalsIgnoreCase(SabnzbdConstants.SPEEDLIMIT))
-			listener.onSpeedLimitFinished(result);
+		switch(request) {
+			case DELETE:
+				listener.onQueueDeleteFinished(result);
+			break;
+			case PAUSE:
+				listener.onQueuePauseFinished(result);
+			break;
+			case RESUME:
+				listener.onQueueResumeFinished(result);
+			break;
+			case SPEEDLIMIT:
+				listener.onSpeedLimitFinished(result);
+			break;
+		}
 		cleanup();
 		super.onPostExecute(result);
 	}
@@ -126,39 +144,26 @@ public class QueueActionTask extends AsyncTask<String, Void, String> {
 		api = null;
 	}	
 	
-	private ArrayList<NameValuePair> prepareForDelete(String... params) {
+	private void prepareForDelete(ArrayList<NameValuePair> arguments,String... params) {
 		String value = (params[0] == null) ? SabnzbdConstants.ALL : params[0];
 		
-		ArrayList<NameValuePair> arguments = new ArrayList<NameValuePair>();
-		arguments.add(new BasicNameValuePair(SabnzbdConstants.APIKEY, api));
-		arguments.add(new BasicNameValuePair(SabnzbdConstants.OUTPUT, SabnzbdConstants.OUTPUT_JSON));
 		arguments.add(new BasicNameValuePair(SabnzbdConstants.MODE, SabnzbdConstants.MODE_QUEUE));
 		arguments.add(new BasicNameValuePair(SabnzbdConstants.NAME, SabnzbdConstants.DELETE));
-		arguments.add(new BasicNameValuePair(SabnzbdConstants.VALUE, value));
-		return arguments;	
+		arguments.add(new BasicNameValuePair(SabnzbdConstants.VALUE, value));	
 	}
 	
-	private ArrayList<NameValuePair> prepareForResume(String... params) {
-		ArrayList<NameValuePair> arguments = new ArrayList<NameValuePair>();
-		arguments.add(new BasicNameValuePair(SabnzbdConstants.APIKEY, api));
-		arguments.add(new BasicNameValuePair(SabnzbdConstants.OUTPUT, SabnzbdConstants.OUTPUT_JSON));
-		
-		if(params[0] == null) {			
+	private void prepareForResume(ArrayList<NameValuePair> arguments,String... params) {	
+		if(params[0] == null) { // A global resume
 			arguments.add(new BasicNameValuePair(SabnzbdConstants.MODE, SabnzbdConstants.MODE_RESUME));
 		}
-		else {
+		else { // Individual resume
 			arguments.add(new BasicNameValuePair(SabnzbdConstants.MODE, SabnzbdConstants.MODE_QUEUE));
 			arguments.add(new BasicNameValuePair(SabnzbdConstants.NAME, SabnzbdConstants.MODE_RESUME));
 			arguments.add(new BasicNameValuePair(SabnzbdConstants.VALUE, params[0]));			
 		}		
-		return arguments;
 	}
 
-	private ArrayList<NameValuePair> prepareForPause(String... params) {
-		ArrayList<NameValuePair> arguments = new ArrayList<NameValuePair>();
-		arguments.add(new BasicNameValuePair(SabnzbdConstants.APIKEY, api));
-		arguments.add(new BasicNameValuePair(SabnzbdConstants.OUTPUT, SabnzbdConstants.OUTPUT_JSON));
-		
+	private void prepareForPause(ArrayList<NameValuePair> arguments,String... params) {		
 		if(params[0] == null) { // A global pause
 			arguments.add(new BasicNameValuePair(SabnzbdConstants.MODE, SabnzbdConstants.MODE_PAUSE));
 		}
@@ -167,16 +172,11 @@ public class QueueActionTask extends AsyncTask<String, Void, String> {
 			arguments.add(new BasicNameValuePair(SabnzbdConstants.NAME, SabnzbdConstants.MODE_PAUSE));
 			arguments.add(new BasicNameValuePair(SabnzbdConstants.VALUE, params[0]));			
 		}		
-		return arguments;
 	}
 	
-	private ArrayList<NameValuePair> prepareForSpeedLimit(String... params) {
-		ArrayList<NameValuePair> arguments = new ArrayList<NameValuePair>();
-		arguments.add(new BasicNameValuePair(SabnzbdConstants.APIKEY, api));
-		arguments.add(new BasicNameValuePair(SabnzbdConstants.OUTPUT, SabnzbdConstants.OUTPUT_JSON));
+	private void prepareForSpeedLimit(ArrayList<NameValuePair> arguments,String... params) {
 		arguments.add(new BasicNameValuePair(SabnzbdConstants.MODE, SabnzbdConstants.MODE_CONFIG));
 		arguments.add(new BasicNameValuePair(SabnzbdConstants.NAME, SabnzbdConstants.SPEEDLIMIT));
 		arguments.add(new BasicNameValuePair(SabnzbdConstants.VALUE, params[0]));		
-		return arguments;
 	}	
 }

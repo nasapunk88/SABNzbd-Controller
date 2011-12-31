@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -54,12 +53,10 @@ public class SpeedLimitFragment extends DialogFragment implements QueueActionTas
 		valueEditText.addTextChangedListener(new TextWatcher() {
 			
 			@Override
-			public void onTextChanged(CharSequence s, int start, int before, int count) {				
-			}
+			public void onTextChanged(CharSequence s, int start, int before, int count) {}
 			
 			@Override
-			public void beforeTextChanged(CharSequence s, int start, int count, int after) {				
-			}
+			public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 			
 			@Override
 			public void afterTextChanged(Editable s) {
@@ -74,8 +71,9 @@ public class SpeedLimitFragment extends DialogFragment implements QueueActionTas
 			
 			@Override
 			public void onClick(View arg0) {
+				String value = valueEditText.getText().toString();
 				Remote targetRemote = getArguments().getParcelable("remote");
-				new QueueActionTask(SpeedLimitFragment.this, targetRemote.buildURL(), targetRemote.getApiKey(), SabnzbdConstants.SPEEDLIMIT).execute(valueEditText.getText().toString());
+				new QueueActionTask(SpeedLimitFragment.this, targetRemote.buildURL(), targetRemote.getApiKey(), QueueActionTask.SPEEDLIMIT).execute(value);
 			}
 		});
 	}

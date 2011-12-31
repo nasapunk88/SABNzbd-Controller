@@ -37,9 +37,9 @@ public class RemoteQueueFragment extends ListFragment implements QueueActionTask
 	private PullToRefreshListView mPtrView;
 	private RemoteQueueListener mListener;	
 	
-	public final static int DELETE_ALL = 0x321, DELETE_SELECTED = DELETE_ALL >> 1,
-							PAUSE_ALL = DELETE_SELECTED >> 1, PAUSE_SELECTED = PAUSE_ALL >> 1,
-							RESUME_ALL = PAUSE_SELECTED >> 1, RESUME_SELECTED = RESUME_ALL >> 1;
+	public final static int DELETE = 0x321;
+	public final static int PAUSE = DELETE >> 1;
+	public final static int RESUME = PAUSE >> 1;
 	
 	public interface RemoteQueueListener {
 		public void onRefreshQueue(PullToRefreshListView view);
@@ -59,20 +59,23 @@ public class RemoteQueueFragment extends ListFragment implements QueueActionTask
 	
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,Bundle savedInstanceState) {
-		return inflater.inflate(R.layout.remote_queue, null);
+		View view = inflater.inflate(R.layout.remote_queue, null);
+		mPtrView = (PullToRefreshListView) view.findViewById(R.id.remote_queue_ptr);
+		return view;
 	}
 		
 	@Override
-	public void onActivityCreated(Bundle savedInstanceState) {
-		mPtrView = (PullToRefreshListView) getView().findViewById(R.id.remote_queue_ptr);
-		getListView().setCacheColorHint(Color.TRANSPARENT); // Optimization for ListView
-		attachFooterView();
+	public void onActivityCreated(Bundle savedInstanceState) {				
+		setupListView();
 		setupListAdapter();
 		initListeners();
 		super.onActivityCreated(savedInstanceState);
 	}
 
-	private void attachFooterView() {
+	private void setupListView() {
+		getListView().setCacheColorHint(Color.TRANSPARENT); // Optimization for ListView
+		
+		// Attach a footer view
 		LayoutInflater inflater = (LayoutInflater) getActivity().getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
 		View footer = inflater.inflate(R.layout.remote_queue_footer, null);
 		getListView().addFooterView(footer,null,false);
@@ -81,16 +84,16 @@ public class RemoteQueueFragment extends ListFragment implements QueueActionTask
 	@Override
 	public void onPrepareOptionsMenu(Menu menu) {
 		menu.clear();
-		// Only show these two options if there are jobs to delete
+		// Only show these options if there are jobs to delete
 		if(mSelectedPositions.size() > 0 && mJobs.size() > 0) {
-			menu.add(Menu.NONE,DELETE_SELECTED,Menu.NONE,"Delete selected");
-			menu.add(Menu.NONE,PAUSE_SELECTED,Menu.NONE,"Pause selected");
-			menu.add(Menu.NONE,RESUME_SELECTED,Menu.NONE,"Resume selected");
+			menu.add(Menu.NONE,DELETE,Menu.NONE,"Delete selected");
+			menu.add(Menu.NONE,PAUSE,Menu.NONE,"Pause selected");
+			menu.add(Menu.NONE,RESUME,Menu.NONE,"Resume selected");
 		}
 		else if(mJobs.size() > 0){
-			menu.add(Menu.NONE,DELETE_ALL,Menu.NONE,"Delete all");
-			menu.add(Menu.NONE,PAUSE_ALL,Menu.NONE,"Pause all");
-			menu.add(Menu.NONE,RESUME_ALL,Menu.NONE,"Resume all");
+			menu.add(Menu.NONE,DELETE,Menu.NONE,"Delete all");
+			menu.add(Menu.NONE,PAUSE,Menu.NONE,"Pause all");
+			menu.add(Menu.NONE,RESUME,Menu.NONE,"Resume all");
 		}
 		super.onPrepareOptionsMenu(menu);
 	}
@@ -98,38 +101,25 @@ public class RemoteQueueFragment extends ListFragment implements QueueActionTask
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		Remote currentRemote = getActivity().getIntent().getParcelableExtra("selected_remote");
-		StringBuilder stringBuilder = null;
 		String selectedJobs = null;
+		if(mSelectedPositions.size() > 0) {
+			selectedJobs = collectSelectedItems();
+		}
 		switch(item.getItemId()) {
-			case DELETE_ALL:
-				new QueueActionTask(this, currentRemote.buildURL(), currentRemote.getApiKey(),SabnzbdConstants.DELETE).execute(selectedJobs);
+			case DELETE:				
+				new QueueActionTask(this, currentRemote.buildURL(), currentRemote.getApiKey(),QueueActionTask.DELETE).execute(selectedJobs);			
 			break;
-			case DELETE_SELECTED:
-				stringBuilder = collectSelectedItems();
-				selectedJobs = stringBuilder.substring(0, stringBuilder.lastIndexOf(",")); // Chop off the last comma
-				new QueueActionTask(this, currentRemote.buildURL(), currentRemote.getApiKey(),SabnzbdConstants.DELETE).execute(selectedJobs);
+			case PAUSE:
+				new QueueActionTask(this, currentRemote.buildURL(), currentRemote.getApiKey(),QueueActionTask.PAUSE).execute(selectedJobs);
 			break;
-			case PAUSE_ALL:
-				new QueueActionTask(this, currentRemote.buildURL(), currentRemote.getApiKey(),SabnzbdConstants.MODE_PAUSE).execute(selectedJobs);
-			break;
-			case PAUSE_SELECTED:
-				stringBuilder = collectSelectedItems();			
-				selectedJobs = stringBuilder.substring(0, stringBuilder.lastIndexOf(","));
-				new QueueActionTask(this, currentRemote.buildURL(), currentRemote.getApiKey(),SabnzbdConstants.MODE_PAUSE).execute(selectedJobs);
-			break;
-			case RESUME_ALL:
-				new QueueActionTask(this, currentRemote.buildURL(), currentRemote.getApiKey(),SabnzbdConstants.MODE_RESUME).execute(selectedJobs);
-			break;
-			case RESUME_SELECTED:
-				stringBuilder = collectSelectedItems();
-				selectedJobs = stringBuilder.substring(0, stringBuilder.lastIndexOf(","));
-				new QueueActionTask(this, currentRemote.buildURL(), currentRemote.getApiKey(),SabnzbdConstants.MODE_RESUME).execute(selectedJobs);
+			case RESUME:
+				new QueueActionTask(this, currentRemote.buildURL(), currentRemote.getApiKey(),QueueActionTask.RESUME).execute(selectedJobs);
 			break;
 		}
 		return super.onOptionsItemSelected(item);
 	}
 
-	private StringBuilder collectSelectedItems() {
+	private String collectSelectedItems() {
 		StringBuilder selectedJobs;
 		selectedJobs = new StringBuilder();
 		// Create a string of jobs to delete, separated by commas i.e: job1,job2,job3
@@ -143,7 +133,7 @@ public class RemoteQueueFragment extends ListFragment implements QueueActionTask
 				e.printStackTrace();
 			}
 		}
-		return selectedJobs;
+		return selectedJobs.substring(0, selectedJobs.lastIndexOf(","));
 	}
 
 	@Override
@@ -266,6 +256,5 @@ public class RemoteQueueFragment extends ListFragment implements QueueActionTask
 	}
 
 	@Override
-	public void onSpeedLimitFinished(String result) {
-	}		
+	public void onSpeedLimitFinished(String result) {}		
 }

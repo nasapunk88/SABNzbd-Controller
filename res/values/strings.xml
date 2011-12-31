@@ -25,5 +25,7 @@
     <string name="pause_successful">Pause successful</string>
     <string name="remote_queue_timeleft">Time Left</string>
     <string name="remote_queu_speed">Speed</string>
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
 
 </resources>

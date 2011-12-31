@@ -21,28 +21,34 @@ import android.support.v4.app.Fragment;
 
 public class HistoryActionTask extends AsyncTask<String, Void, String> {
 	private ProgressDialog progressDialog;
-	private String url,auth_api,request;
+	private String url,api;
+	private int request;
 	private Fragment fragment;
+	
+	public static final int DELETE = 0x345;
+	public static final int RETRY = DELETE >> 1;
 	
 	public interface HistoryActionTaskListener {
 		public void onHistoryDeleteFinished(String result);
 		public void onHistoryRetryFinished(String result);
 	}
 	
-	public HistoryActionTask(Fragment fragment,String url,String api,String request) {
+	public HistoryActionTask(Fragment fragment,String url,String api,int request) {
 		this.fragment = fragment;
 		this.url = url;
 		this.request = request;
-		auth_api = api;
+		this.api = api;
 	}
 	
 	@Override
 	protected void onPreExecute() {
-		if(request.equalsIgnoreCase(SabnzbdConstants.DELETE)) {
-			progressDialog = ProgressDialog.show(fragment.getActivity(), null, "Deleting history");
-		}
-		else if(request.equalsIgnoreCase(SabnzbdConstants.MODE_RETRY)) {
-			progressDialog = ProgressDialog.show(fragment.getActivity(), null, "Attempting to retry");
+		switch(request) {
+			case DELETE:
+				progressDialog = ProgressDialog.show(fragment.getActivity(), null, "Deleting history");
+			break;
+			case RETRY:
+				progressDialog = ProgressDialog.show(fragment.getActivity(), null, "Attempting to retry");
+			break;
 		}
 		super.onPreExecute();
 	}
@@ -51,13 +57,17 @@ public class HistoryActionTask extends AsyncTask<String, Void, String> {
 	protected String doInBackground(String... params) {
 		HttpClient httpClient = new DefaultHttpClient();
 		HttpPost httpRequest = new HttpPost(url);
-		ArrayList<NameValuePair> arguments = null;
+		ArrayList<NameValuePair> arguments = new ArrayList<NameValuePair>();
+		arguments.add(new BasicNameValuePair(SabnzbdConstants.APIKEY, api));
+		arguments.add(new BasicNameValuePair(SabnzbdConstants.OUTPUT, SabnzbdConstants.OUTPUT_JSON));		
 		
-		if(request.equalsIgnoreCase(SabnzbdConstants.DELETE)) {
-			arguments = prepareForDelete(params);
-		}
-		else if(request.equalsIgnoreCase(SabnzbdConstants.MODE_RETRY)) {
-			arguments = prepareForRetry(params);
+		switch(request) {
+			case DELETE:
+				prepareForDelete(arguments,params);
+			break;
+			case RETRY:
+				prepareForRetry(arguments,params);
+			break;
 		}
 		
 		try {
@@ -87,40 +97,36 @@ public class HistoryActionTask extends AsyncTask<String, Void, String> {
 	@Override
 	protected void onPostExecute(String result) {
 		HistoryActionTaskListener listener = (HistoryActionTaskListener) fragment;
-		if(request.equalsIgnoreCase(SabnzbdConstants.DELETE))
-			listener.onHistoryDeleteFinished(result);
-		else if(request.equalsIgnoreCase(SabnzbdConstants.MODE_RETRY))
-			listener.onHistoryRetryFinished(result);
+		switch(request) {
+			case DELETE:
+				listener.onHistoryDeleteFinished(result);
+			break;
+			case RETRY:
+				listener.onHistoryRetryFinished(result);
+			break;
+		}		
 		cleanup();
 		super.onPostExecute(result);
 	}
 
-	private void cleanup() {		
+	private void cleanup() {
 		progressDialog.dismiss();
 		progressDialog = null;
 		fragment = null;
 		url = null;
-		auth_api = null;
+		api = null;
 	}
 	
-	private ArrayList<NameValuePair> prepareForDelete(String... params) {
+	private void prepareForDelete(ArrayList<NameValuePair> arguments, String... params) {
 		String value = (params[0] == null) ? SabnzbdConstants.ALL : params[0];
 		
-		ArrayList<NameValuePair> arguments = new ArrayList<NameValuePair>();
-		arguments.add(new BasicNameValuePair(SabnzbdConstants.APIKEY, auth_api));
-		arguments.add(new BasicNameValuePair(SabnzbdConstants.OUTPUT, SabnzbdConstants.OUTPUT_JSON));
 		arguments.add(new BasicNameValuePair(SabnzbdConstants.MODE, SabnzbdConstants.MODE_HISTORY));
 		arguments.add(new BasicNameValuePair(SabnzbdConstants.NAME, SabnzbdConstants.DELETE));
 		arguments.add(new BasicNameValuePair(SabnzbdConstants.VALUE, value));
-		return arguments;
 	}
 	
-	private ArrayList<NameValuePair> prepareForRetry(String... params) {
-		ArrayList<NameValuePair> arguments = new ArrayList<NameValuePair>();
-		arguments.add(new BasicNameValuePair(SabnzbdConstants.APIKEY, auth_api));
-		arguments.add(new BasicNameValuePair(SabnzbdConstants.OUTPUT, SabnzbdConstants.OUTPUT_JSON));		
+	private void prepareForRetry(ArrayList<NameValuePair> arguments, String... params) {		
 		arguments.add(new BasicNameValuePair(SabnzbdConstants.MODE, SabnzbdConstants.MODE_RETRY));
 		arguments.add(new BasicNameValuePair(SabnzbdConstants.VALUE, params[0]));
-		return arguments;
 	}
 }

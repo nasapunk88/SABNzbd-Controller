@@ -34,9 +34,13 @@ public class RemoteFragment extends ListFragment {
 	private static RemoteFragmentAdapter mAdapter;
 	private static ListView mListView;
 	private static View mEmptyRemoteView;
-	private static ArrayList<Remote> remotes = new ArrayList<Remote>(); // A list of remotes
-	public 	static final int EDIT_REMOTE = 0x88, DELETE_REMOTE = EDIT_REMOTE >> 2, LOAD_REMOTE = DELETE_REMOTE >> 2,
-							 SET_SPEED_LIMIT = LOAD_REMOTE >> 2;
+	private Button mAddRemote;
+	private static ArrayList<Remote> remotes = new ArrayList<Remote>();
+	
+	public 	static final int EDIT_REMOTE = 0x88;
+	public 	static final int DELETE_REMOTE = EDIT_REMOTE >> 2;
+	public 	static final int LOAD_REMOTE = DELETE_REMOTE >> 2;
+	public 	static final int SET_SPEED_LIMIT = LOAD_REMOTE >> 2;
 	
 	private RemoteFragmentListener mListener;	
 
@@ -48,6 +52,9 @@ public class RemoteFragment extends ListFragment {
 		public void onAddRemoteClicked();
 	}
 	
+	/*
+	 * A constructor
+	 */
 	public static RemoteFragment newInstance() {
 		RemoteFragment self = new RemoteFragment();
 		return self;
@@ -61,37 +68,37 @@ public class RemoteFragment extends ListFragment {
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
-		loadRemotes();
+		loadRemotes(); // Fetch SABNzbd remote profiles as soon as this fragment has been created
 		super.onCreate(savedInstanceState);
 	}
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-		return inflater.inflate(R.layout.remote, null);
-	}
-
-	@Override
-	public void onActivityCreated(Bundle savedInstanceState) {		
-		initViews();		
-		registerForContextMenu(mListView); // Register this ListView to show a context menu		
-		setupListAdapter();
-		super.onActivityCreated(savedInstanceState);
-	}
-	
-	private void initViews() {
-		mListView = getListView();		
-		mEmptyRemoteView = getView().findViewById(R.id.remote_empty);
-		Button addRemote = (Button) getView().findViewById(R.id.remote_add_remote);
+		View view = inflater.inflate(R.layout.remote, null);
+		mEmptyRemoteView = (Button) view.findViewById(R.id.remote_add_remote);
+		mAddRemote = (Button) view.findViewById(R.id.remote_add_remote);
 		
-		mListView.setCacheColorHint(getActivity().getResources().getColor(R.color.main_background)); // Optimization for ListView
-		
-		addRemote.setOnClickListener(new OnClickListener() {
+		mAddRemote.setOnClickListener(new OnClickListener() {
 			
 			@Override
 			public void onClick(View v) {
 				mListener.onAddRemoteClicked();
 			}
-		});
+		});		
+		return view;
+	}
+
+	@Override
+	public void onActivityCreated(Bundle savedInstanceState) {		
+		setupListView();
+		registerForContextMenu(mListView); // Register this ListView to show a context menu		
+		setupListAdapter();
+		super.onActivityCreated(savedInstanceState);
+	}
+	
+	private void setupListView() {
+		mListView = getListView();		
+		mListView.setCacheColorHint(getActivity().getResources().getColor(R.color.main_background)); // Optimization for ListView
 	}	
 	
 	/*
@@ -112,9 +119,9 @@ public class RemoteFragment extends ListFragment {
 	
 	@Override
 	public void onCreateContextMenu(ContextMenu menu, View v,ContextMenuInfo menuInfo) {
-		menu.add(Menu.NONE, EDIT_REMOTE, Menu.NONE, "Edit");
-		menu.add(Menu.NONE, DELETE_REMOTE, Menu.NONE, "Delete");
-		menu.add(Menu.NONE,SET_SPEED_LIMIT,Menu.NONE,"Limit Speed");
+		menu.add(Menu.NONE, EDIT_REMOTE, Menu.NONE, R.string.edit);
+		menu.add(Menu.NONE, DELETE_REMOTE, Menu.NONE, R.string.delete);
+		menu.add(Menu.NONE,SET_SPEED_LIMIT,Menu.NONE,"Set Speed Limit");
 		super.onCreateContextMenu(menu, v, menuInfo);
 	}
 
@@ -146,9 +153,10 @@ public class RemoteFragment extends ListFragment {
 	}
 	
 	/*
-	 * A background task for deleting/loading remotes
+	 * A background task for deleting/loading remotes. This accepts integers
+	 * as parameters.
 	 */
-	static class DatabaseTask extends AsyncTask<Integer, Void, Long> {
+	private static class DatabaseTask extends AsyncTask<Integer, Void, Long> {
 		private WeakReference<Activity> mWeakContext;
 		private int request,position;
 				
@@ -169,10 +177,13 @@ public class RemoteFragment extends ListFragment {
 					db.close();
 				break;
 				case LOAD_REMOTE:
-					Cursor cur = db.getAllRows();					
-					if(remotes.size() < cur.getCount()) // If a new remote has been added, move to that remote in the database
+					Cursor cur = db.getAllRows();
+					
+					// Move to the last remote position in the database if
+					// a new remote has been added.
+					if(remotes.size() < cur.getCount())
 						cur.moveToPosition(remotes.size()-1);
-					else // A remote has been updated
+					else
 						remotes.clear();
 					
 					while(cur.moveToNext()) { // Collect all columns from each row and process it
@@ -199,14 +210,22 @@ public class RemoteFragment extends ListFragment {
 						Toast.makeText(mWeakContext.get(), "Delete successful!", Toast.LENGTH_SHORT).show();
 					}
 				break;
-			}		
-			if(mAdapter != null) mAdapter.notifyDataSetChanged();
+			}
 			
+			if(mAdapter != null) mAdapter.notifyDataSetChanged();			
+			showMessageIfEmpty();
+			super.onPostExecute(result);
+		}
+
+		/*
+		 * Show an informative message if there exists no
+		 * remotes.
+		 */
+		private void showMessageIfEmpty() {
 			if(remotes.size() < 1) {
 				mListView.setVisibility(View.GONE);
 				mEmptyRemoteView.setVisibility(View.VISIBLE);				
 			}
-			super.onPostExecute(result);
 		}
 	}
 }
