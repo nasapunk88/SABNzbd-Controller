@@ -3,6 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:gravity="center"
     android:id="@+id/remote_layout_root">
     
     <ListView
@@ -14,17 +15,15 @@
         android:listSelector="@drawable/listview_selector"
         android:layout_marginBottom="55dp"/>
     
-    <TextView 
-        android:id="@android:id/empty"
+    <ViewStub 
+        android:id="@+id/remote_empty"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"
-        android:textAppearance="@android:style/TextAppearance.Medium"
-        android:textColor="@color/black"
-        android:text="@string/empty_remote_listview"
-        android:visibility="gone"/>
+        android:layout="@layout/remote_empty_viewstub"/>
     
     <View
+        android:id="@+id/remote_viewfiller"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1.0"/>
