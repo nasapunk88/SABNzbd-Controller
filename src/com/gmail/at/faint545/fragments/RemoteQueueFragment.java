@@ -263,5 +263,9 @@ public class RemoteQueueFragment extends ListFragment implements QueueActionTask
 		catch (JSONException e) {
 			e.printStackTrace();
 		}	
+	}
+
+	@Override
+	public void onSpeedLimitFinished(String result) {
 	}		
 }

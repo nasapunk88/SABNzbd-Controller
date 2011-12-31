@@ -15,6 +15,7 @@ public interface SabnzbdConstants {
 							   MODE_RESUME = "resume",
 							   MODE_SHUTDOWN = "shutdown",
 							   MODE_RETRY = "retry",
+							   MODE_CONFIG = "config",
 							   STATUS_COMPLETED = "Completed",
 							   STATUS_FAILED = "Failed";
 	
@@ -34,7 +35,8 @@ public interface SabnzbdConstants {
 							   ID = "id",
 							   ALL = "all",
 							   TIMELEFT = "timeleft",
-							   SPEED = "speed";
+							   SPEED = "speed",
+							   SPEEDLIMIT = "speedlimit";
 	
 	public final static String PAUSED = "Paused",
 							   DOWNLOADING = "Downloading",

@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.SupportActivity;
 import android.support.v4.view.MenuItem;
@@ -34,7 +35,8 @@ public class RemoteFragment extends ListFragment {
 	private static ListView mListView;
 	private static View mEmptyRemoteView;
 	private static ArrayList<Remote> remotes = new ArrayList<Remote>(); // A list of remotes
-	public 	static final int EDIT_REMOTE = 0x88, DELETE_REMOTE = EDIT_REMOTE >> 2, LOAD_REMOTE = DELETE_REMOTE >> 2;
+	public 	static final int EDIT_REMOTE = 0x88, DELETE_REMOTE = EDIT_REMOTE >> 2, LOAD_REMOTE = DELETE_REMOTE >> 2,
+							 SET_SPEED_LIMIT = LOAD_REMOTE >> 2;
 	
 	private RemoteFragmentListener mListener;	
 
@@ -67,7 +69,6 @@ public class RemoteFragment extends ListFragment {
 		initViews();
 		loadRemotes();
 		registerForContextMenu(mListView); // Register this ListView to show a context menu		
-		mListView.setCacheColorHint(getActivity().getResources().getColor(R.color.main_background)); // Optimization for ListView
 		setupListAdapter();
 		super.onActivityCreated(savedInstanceState);
 	}
@@ -76,6 +77,8 @@ public class RemoteFragment extends ListFragment {
 		mListView = getListView();		
 		mEmptyRemoteView = getView().findViewById(R.id.remote_empty);
 		Button addRemote = (Button) getView().findViewById(R.id.remote_add_remote);
+		
+		mListView.setCacheColorHint(getActivity().getResources().getColor(R.color.main_background)); // Optimization for ListView
 		
 		addRemote.setOnClickListener(new OnClickListener() {
 			
@@ -94,6 +97,9 @@ public class RemoteFragment extends ListFragment {
 		new DatabaseTask(getActivity()).execute(LOAD_REMOTE);
 	}	
 	
+	/*
+	 * A helper function to create the list adapter and set it
+	 */
 	private void setupListAdapter() {
 		mAdapter = new RemoteFragmentAdapter(getActivity(), R.layout.remote_row, remotes);
 		setListAdapter(mAdapter);
@@ -103,6 +109,7 @@ public class RemoteFragment extends ListFragment {
 	public void onCreateContextMenu(ContextMenu menu, View v,ContextMenuInfo menuInfo) {
 		menu.add(Menu.NONE, EDIT_REMOTE, Menu.NONE, "Edit");
 		menu.add(Menu.NONE, DELETE_REMOTE, Menu.NONE, "Delete");
+		menu.add(Menu.NONE,SET_SPEED_LIMIT,Menu.NONE,"Limit Speed");
 		super.onCreateContextMenu(menu, v, menuInfo);
 	}
 
@@ -116,6 +123,11 @@ public class RemoteFragment extends ListFragment {
 			case DELETE_REMOTE:
 				new DatabaseTask(getActivity()).execute(DELETE_REMOTE,menuInfo.position);
 			break;
+			case SET_SPEED_LIMIT:
+				Remote thisRemote = remotes.get(menuInfo.position);
+				DialogFragment setSpeedLimit = SpeedLimitFragment.newInstance(thisRemote);
+				setSpeedLimit.show(getSupportFragmentManager(), "setSpeedLimitDialog");				
+			break;
 		}
 		return super.onContextItemSelected(item);
 	}
@@ -128,6 +140,9 @@ public class RemoteFragment extends ListFragment {
 		super.onListItemClick(l, v, position, id);
 	}
 	
+	/*
+	 * A background task for deleting/loading remotes
+	 */
 	static class DatabaseTask extends AsyncTask<Integer, Void, Long> {
 		private WeakReference<Activity> mWeakContext;
 		private int request,position;
@@ -147,7 +162,7 @@ public class RemoteFragment extends ListFragment {
 					position = params[1];
 					result = db.delete(Integer.parseInt(remotes.get(position).getId()));
 					db.close();
-					return result;
+				break;
 				case LOAD_REMOTE:
 					Cursor cur = db.getAllRows();					
 					if(remotes.size() < cur.getCount()) // If a new remote has been added, move to that remote in the database

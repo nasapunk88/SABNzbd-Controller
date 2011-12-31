@@ -33,6 +33,7 @@ public class QueueActionTask extends AsyncTask<String, Void, String> {
 		public void onQueueDeleteFinished(String result);
 		public void onQueuePauseFinished(String result);
 		public void onQueueResumeFinished(String result);
+		public void onSpeedLimitFinished(String result);
 	}
 	
 	public QueueActionTask(Fragment fragment,String url,String api,String request) {
@@ -45,13 +46,16 @@ public class QueueActionTask extends AsyncTask<String, Void, String> {
 	@Override
 	protected void onPreExecute() {
 		if(request.equalsIgnoreCase(SabnzbdConstants.DELETE)) {
-			progressDialog = ProgressDialog.show(fragment.getActivity(), null, "Deleting history");
+			progressDialog = ProgressDialog.show(fragment.getActivity(), null, "Deleting download(s)");
 		}
 		else if(request.equalsIgnoreCase(SabnzbdConstants.MODE_PAUSE)) {
 			progressDialog = ProgressDialog.show(fragment.getActivity(), null, "Pausing download(s)");
 		}
 		else if(request.equalsIgnoreCase(SabnzbdConstants.MODE_RESUME)) {
 			progressDialog = ProgressDialog.show(fragment.getActivity(), null, "Resuming download(s)");
+		}
+		else if(request.equalsIgnoreCase(SabnzbdConstants.SPEEDLIMIT)) {
+			progressDialog = ProgressDialog.show(fragment.getActivity(), null, "Setting speed limit");
 		}
 		super.onPreExecute();
 	}
@@ -70,7 +74,10 @@ public class QueueActionTask extends AsyncTask<String, Void, String> {
 		}
 		else if(request.equalsIgnoreCase(SabnzbdConstants.MODE_RESUME)) {
 			arguments = prepareForResume(params);
-		}		
+		}
+		else if(request.equalsIgnoreCase(SabnzbdConstants.SPEEDLIMIT)) {
+			arguments = prepareForSpeedLimit(params);
+		}
 		
 		try {
 			httpRequest.setEntity(new UrlEncodedFormEntity(arguments));
@@ -105,6 +112,8 @@ public class QueueActionTask extends AsyncTask<String, Void, String> {
 			listener.onQueuePauseFinished(result);
 		else if(request.equalsIgnoreCase(SabnzbdConstants.MODE_RESUME))
 			listener.onQueueResumeFinished(result);
+		else if(request.equalsIgnoreCase(SabnzbdConstants.SPEEDLIMIT))
+			listener.onSpeedLimitFinished(result);
 		cleanup();
 		super.onPostExecute(result);
 	}
@@ -141,8 +150,7 @@ public class QueueActionTask extends AsyncTask<String, Void, String> {
 			arguments.add(new BasicNameValuePair(SabnzbdConstants.MODE, SabnzbdConstants.MODE_QUEUE));
 			arguments.add(new BasicNameValuePair(SabnzbdConstants.NAME, SabnzbdConstants.MODE_RESUME));
 			arguments.add(new BasicNameValuePair(SabnzbdConstants.VALUE, params[0]));			
-		}
-		
+		}		
 		return arguments;
 	}
 
@@ -158,8 +166,17 @@ public class QueueActionTask extends AsyncTask<String, Void, String> {
 			arguments.add(new BasicNameValuePair(SabnzbdConstants.MODE, SabnzbdConstants.MODE_QUEUE));
 			arguments.add(new BasicNameValuePair(SabnzbdConstants.NAME, SabnzbdConstants.MODE_PAUSE));
 			arguments.add(new BasicNameValuePair(SabnzbdConstants.VALUE, params[0]));			
-		}
-		
+		}		
+		return arguments;
+	}
+	
+	private ArrayList<NameValuePair> prepareForSpeedLimit(String... params) {
+		ArrayList<NameValuePair> arguments = new ArrayList<NameValuePair>();
+		arguments.add(new BasicNameValuePair(SabnzbdConstants.APIKEY, api));
+		arguments.add(new BasicNameValuePair(SabnzbdConstants.OUTPUT, SabnzbdConstants.OUTPUT_JSON));
+		arguments.add(new BasicNameValuePair(SabnzbdConstants.MODE, SabnzbdConstants.MODE_CONFIG));
+		arguments.add(new BasicNameValuePair(SabnzbdConstants.NAME, SabnzbdConstants.SPEEDLIMIT));
+		arguments.add(new BasicNameValuePair(SabnzbdConstants.VALUE, params[0]));		
 		return arguments;
 	}	
 }
