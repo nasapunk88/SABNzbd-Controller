@@ -60,14 +60,19 @@ public class RemoteFragment extends ListFragment {
 	}
 	
 	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		loadRemotes();
+		super.onCreate(savedInstanceState);
+	}
+
+	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		return inflater.inflate(R.layout.remote, null);
 	}
 
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {		
-		initViews();
-		loadRemotes();
+		initViews();		
 		registerForContextMenu(mListView); // Register this ListView to show a context menu		
 		setupListAdapter();
 		super.onActivityCreated(savedInstanceState);
