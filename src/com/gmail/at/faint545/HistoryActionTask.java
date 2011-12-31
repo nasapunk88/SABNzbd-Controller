@@ -86,12 +86,11 @@ public class HistoryActionTask extends AsyncTask<String, Void, String> {
 			return jsonStringBuilder.toString();
 		} 
 		catch (ClientProtocolException e) {
-			e.printStackTrace();
+			return ClientProtocolException.class.getName();
 		} 
 		catch (IOException e) {
-			e.printStackTrace();
+			return IOException.class.getName();
 		}
-		return null;
 	}
 
 	@Override

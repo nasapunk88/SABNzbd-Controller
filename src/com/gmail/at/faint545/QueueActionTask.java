@@ -107,12 +107,11 @@ public class QueueActionTask extends AsyncTask<String, Void, String> {
 			return jsonStringBuilder.toString();
 		} 
 		catch (ClientProtocolException e) {
-			e.printStackTrace();
+			return ClientProtocolException.class.getName();
 		} 
 		catch (IOException e) {
-			e.printStackTrace();
-		}		
-		return null;
+			return IOException.class.getName();
+		}
 	}
 
 	@Override
@@ -178,5 +177,5 @@ public class QueueActionTask extends AsyncTask<String, Void, String> {
 		arguments.add(new BasicNameValuePair(SabnzbdConstants.MODE, SabnzbdConstants.MODE_CONFIG));
 		arguments.add(new BasicNameValuePair(SabnzbdConstants.NAME, SabnzbdConstants.SPEEDLIMIT));
 		arguments.add(new BasicNameValuePair(SabnzbdConstants.VALUE, params[0]));		
-	}	
+	}		
 }

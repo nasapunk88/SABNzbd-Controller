@@ -2,10 +2,13 @@ package com.gmail.at.faint545.fragments;
 
 import java.util.ArrayList;
 
+import org.apache.http.client.ClientProtocolException;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
@@ -207,9 +210,22 @@ public class RemoteHistoryFragment extends ListFragment implements HistoryAction
 			}
 		} 
 		catch (JSONException e) {
-			Toast.makeText(getActivity(), R.string.generic_error, Toast.LENGTH_SHORT).show();
+			if(result.equals(ClientProtocolException.class.getName()) || result.equals(ClientProtocolException.class.getName())) {
+				buildAlertDialog().show();
+			}
 		}
 	}
+	
+	private AlertDialog buildAlertDialog() {
+		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+		builder.setMessage(R.string.connect_error);
+		builder.setCancelable(false);
+		builder.setNegativeButton(R.string.ok, new DialogInterface.OnClickListener() {			
+			@Override
+			public void onClick(DialogInterface dialog, int which) {}
+		});			
+		return builder.create();
+	}	
 
 	@Override
 	public void onHistoryRetryFinished(String result) {

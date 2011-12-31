@@ -1,12 +1,16 @@
 package com.gmail.at.faint545.fragments;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
+import org.apache.http.client.ClientProtocolException;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
@@ -206,40 +210,20 @@ public class RemoteQueueFragment extends ListFragment implements QueueActionTask
 
 	@Override
 	public void onQueueDeleteFinished(String result) {
-		try {
-			String status = new JSONObject(result).getString(SabnzbdConstants.STATUS);
-			if(Boolean.parseBoolean(status)){
-				mListener.onRefreshQueue(null);
-				mSelectedPositions.clear();
-			}
-			else {
-				Toast.makeText(getActivity(), R.string.generic_error, Toast.LENGTH_SHORT).show();
-			}
-		} 
-		catch (JSONException e) {
-			e.printStackTrace();
-		}		
+		validateResults(result);		
 	}
 
 	@Override
 	public void onQueuePauseFinished(String result) {
-		try {
-			String status = new JSONObject(result).getString(SabnzbdConstants.STATUS);
-			if(Boolean.parseBoolean(status)){
-				mListener.onRefreshQueue(null);
-				mSelectedPositions.clear();
-			}
-			else {
-				Toast.makeText(getActivity(), R.string.generic_error, Toast.LENGTH_SHORT).show();
-			}
-		} 
-		catch (JSONException e) {
-			e.printStackTrace();
-		}	
+		validateResults(result);
 	}
 
 	@Override
 	public void onQueueResumeFinished(String result) {
+		validateResults(result);	
+	}
+	
+	private void validateResults(String result) {
 		try {
 			String status = new JSONObject(result).getString(SabnzbdConstants.STATUS);
 			if(Boolean.parseBoolean(status)){
@@ -251,9 +235,22 @@ public class RemoteQueueFragment extends ListFragment implements QueueActionTask
 			}
 		} 
 		catch (JSONException e) {
-			e.printStackTrace();
-		}	
+			if(result.equals(ClientProtocolException.class.getName()) || result.equals(IOException.class.getName())) {
+				buildAlertDialog().show();
+			}
+		}
 	}
+	
+	private AlertDialog buildAlertDialog() {
+		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+		builder.setMessage(R.string.connect_error);
+		builder.setCancelable(false);
+		builder.setNegativeButton(R.string.ok, new DialogInterface.OnClickListener() {			
+			@Override
+			public void onClick(DialogInterface dialog, int which) {}
+		});			
+		return builder.create();
+	}		
 
 	@Override
 	public void onSpeedLimitFinished(String result) {}		
