@@ -2,5 +2,6 @@
 <resources>    
     <style name="Theme.SABActionBar" parent="@style/Theme.Sherlock">
         <item name="abBackground">@drawable/ab_background</item>
+        <item name="abLogo">@drawable/ic_logo</item>
     </style>
 </resources>

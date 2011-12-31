@@ -26,7 +26,9 @@ public class ControllerActivity extends FragmentActivity implements NewRemoteLis
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);        
         BugSenseHandler.setup(this, "42fc347a");
-        getSupportActionBar().setDisplayShowHomeEnabled(false); // Remove activity/application icon
+        getSupportActionBar().setDisplayShowTitleEnabled(false);
+        getSupportActionBar().setDisplayUseLogoEnabled(true);
+        //getSupportActionBar().setDisplayShowHomeEnabled(false); // Remove activity/application icon
         attachFragment(remoteFragment = RemoteFragment.newInstance()); // Attach RemoteFragment to this activity
     }
 
