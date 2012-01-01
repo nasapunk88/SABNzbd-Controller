@@ -18,40 +18,32 @@ import com.gmail.at.faint545.R;
 import com.gmail.at.faint545.Remote;
 import com.gmail.at.faint545.databases.RemoteDatabase;
 
-/**
- * @author  alex
- */
 public class NewRemoteFragment extends Fragment {
 	private EditText nickEditText;
 	private EditText addressEditText;
 	private EditText portEditText;
 	private EditText apiKeyEditText;
 	private Button saveRemote;
-	/**
-	 * @uml.property  name="remoteListener"
-	 * @uml.associationEnd  
-	 */
 	private NewRemoteListener remoteListener;
-	/**
-	 * @uml.property  name="mRemote"
-	 * @uml.associationEnd  
-	 */
-	private Remote mRemote;
-	
+
 	public interface NewRemoteListener {
 		public void onRemoteSaved();
 	}
-	
-	public NewRemoteFragment(Remote remote) {
-		mRemote = remote;
+
+	public static NewRemoteFragment newInstance(Remote remote) {
+		Bundle args = new Bundle();
+		args.putParcelable("remote", remote);
+		NewRemoteFragment self = new NewRemoteFragment();
+		self.setArguments(args);
+		return self;
 	}
-	
+
 	@Override
 	public void onAttach(SupportActivity activity) {
 		remoteListener = (NewRemoteListener) activity;
 		super.onAttach(activity);
 	}
-	
+
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		return inflater.inflate(R.layout.new_remote, null);
@@ -60,16 +52,16 @@ public class NewRemoteFragment extends Fragment {
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		setupViews();
-		if(mRemote != null) populateViews();
+		if(getRemote() != null) populateViews();
 		initListeners();
 		super.onActivityCreated(savedInstanceState);
 	}
 
 	private void populateViews() {
-		nickEditText.setText(mRemote.getName());
-		addressEditText.setText(mRemote.getAddress());
-		portEditText.setText(mRemote.getPort());
-		apiKeyEditText.setText(mRemote.getApiKey());	
+		nickEditText.setText(getRemote().getName());
+		addressEditText.setText(getRemote().getAddress());
+		portEditText.setText(getRemote().getPort());
+		apiKeyEditText.setText(getRemote().getApiKey());	
 	}
 
 	private void initListeners() {
@@ -88,7 +80,7 @@ public class NewRemoteFragment extends Fragment {
 				}
 			}
 		});
-		
+
 		addressEditText.addTextChangedListener(new TextWatcher() {			
 			@Override
 			public void onTextChanged(CharSequence s, int start, int before, int count) {}			
@@ -104,14 +96,14 @@ public class NewRemoteFragment extends Fragment {
 				}
 			}
 		});
-		
+
 		portEditText.addTextChangedListener(new TextWatcher() {			
 			@Override
 			public void onTextChanged(CharSequence s, int start, int before, int count) {}
-			
+
 			@Override
 			public void beforeTextChanged(CharSequence s, int start, int count,int after) {}
-			
+
 			@Override
 			public void afterTextChanged(Editable s) {
 				if(s.length() > 0 && nickEditText.getText().length() > 0 && addressEditText.getText().length() > 0 && apiKeyEditText.getText().length() > 0) {
@@ -122,14 +114,14 @@ public class NewRemoteFragment extends Fragment {
 				}
 			}
 		});
-		
+
 		apiKeyEditText.addTextChangedListener(new TextWatcher() {			
 			@Override
 			public void onTextChanged(CharSequence s, int start, int before, int count) {}
-			
+
 			@Override
 			public void beforeTextChanged(CharSequence s, int start, int count,int after) {}
-			
+
 			@Override
 			public void afterTextChanged(Editable s) {
 				if(s.length() > 0 && nickEditText.getText().length() > 0 && addressEditText.getText().length() > 0 && portEditText.getText().length() > 0) {
@@ -140,7 +132,7 @@ public class NewRemoteFragment extends Fragment {
 				}
 			}
 		});
-		
+
 		saveRemote.setOnClickListener(new OnClickListener() {			
 			@Override
 			public void onClick(View v) {
@@ -148,7 +140,7 @@ public class NewRemoteFragment extends Fragment {
 			}
 		});
 	}
-	
+
 	private void saveToDatabase(String nickname, String address, String port, String apiKey) {
 		new AsyncTask<String, Void, Long>(){
 			RemoteDatabase database;
@@ -161,9 +153,9 @@ public class NewRemoteFragment extends Fragment {
 			@Override
 			protected Long doInBackground(String... params) {
 				String nickname = params[0], address = params[1],
-					   port = params[2], apiKey = params[3];
+						port = params[2], apiKey = params[3];
 				database.open();
-				long result = (mRemote != null) ? database.update(Integer.parseInt(mRemote.getId()), nickname, address, port, apiKey) : database.insert(nickname, address, port, apiKey);
+				long result = (getRemote() != null) ? database.update(Integer.parseInt(getRemote().getId()), nickname, address, port, apiKey) : database.insert(nickname, address, port, apiKey);
 				database.close();
 				return result;
 			}
@@ -179,7 +171,7 @@ public class NewRemoteFragment extends Fragment {
 				}
 				super.onPostExecute(result);
 			}
-			
+
 		}.execute(nickname,address,port,apiKey);
 	}
 
@@ -189,11 +181,15 @@ public class NewRemoteFragment extends Fragment {
 		portEditText = (EditText) getView().findViewById(R.id.new_remote_layout_port_edit_text);
 		apiKeyEditText = (EditText) getView().findViewById(R.id.new_remote_layout_apikey_edit_text);
 		saveRemote = (Button) getView().findViewById(R.id.new_remote_save_button);
-		
+
 		saveRemote.setEnabled(false); // Disable button by default
 	}
-	
+
 	public void populateApiKey(String apiKey) {
 		apiKeyEditText.setText(apiKey);
+	}
+
+	private Remote getRemote() {
+		return getArguments().getParcelable("remote");
 	}
 }

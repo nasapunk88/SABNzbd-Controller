@@ -26,18 +26,11 @@ import android.widget.Toast;
 
 import com.gmail.at.faint545.R;
 import com.gmail.at.faint545.Remote;
-import com.gmail.at.faint545.activities.RemoteDetailsActivity;
+import com.gmail.at.faint545.activities.DetailsActivity;
 import com.gmail.at.faint545.adapters.RemoteFragmentAdapter;
 import com.gmail.at.faint545.databases.RemoteDatabase;
 
-/**
- * @author  alex
- */
 public class RemoteFragment extends ListFragment {
-	/**
-	 * @uml.property  name="mAdapter"
-	 * @uml.associationEnd  
-	 */
 	private static RemoteFragmentAdapter mAdapter;
 	private static ListView mListView;
 	private static View mEmptyRemoteView;
@@ -48,24 +41,15 @@ public class RemoteFragment extends ListFragment {
 	public 	static final int DELETE_REMOTE = EDIT_REMOTE >> 2;
 	public 	static final int LOAD_REMOTE = DELETE_REMOTE >> 2;
 	public 	static final int SET_SPEED_LIMIT = LOAD_REMOTE >> 2;
-	
-	/**
-	 * @uml.property  name="mListener"
-	 * @uml.associationEnd  
-	 */
 	private RemoteFragmentListener mListener;	
 
-	/*
-	 * Callback functions for this class
-	 */
+	/* Callback functions for this class */
 	public interface RemoteFragmentListener {
 		public void onEditRemote(Remote targetRemote);
 		public void onAddRemoteClicked();
 	}
 	
-	/*
-	 * A constructor
-	 */
+	/* The default constructor */
 	public static RemoteFragment newInstance() {
 		RemoteFragment self = new RemoteFragment();
 		return self;
@@ -79,7 +63,7 @@ public class RemoteFragment extends ListFragment {
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
-		loadRemotes(); // Fetch SABNzbd remote profiles as soon as this fragment has been created
+		loadProfiles(); // Fetch SABNzbd profiles as soon as this fragment has been created
 		super.onCreate(savedInstanceState);
 	}
 
@@ -116,13 +100,11 @@ public class RemoteFragment extends ListFragment {
      * Obtain all SABNzbd remote profiles from the local data store. Do this as a background task
      * to avoid ANR dialogs.
      */
-	public void loadRemotes() {
+	public void loadProfiles() {
 		new DatabaseTask(getActivity()).execute(LOAD_REMOTE);
 	}	
 	
-	/*
-	 * A helper function to create the list adapter and set it
-	 */
+	/* A helper function to initialize the list adapter and set it */
 	private void setupListAdapter() {
 		mAdapter = new RemoteFragmentAdapter(getActivity(), R.layout.remote_row, remotes);
 		setListAdapter(mAdapter);
@@ -148,7 +130,7 @@ public class RemoteFragment extends ListFragment {
 			break;
 			case SET_SPEED_LIMIT:
 				Remote thisRemote = remotes.get(menuInfo.position);
-				DialogFragment setSpeedLimit = SpeedLimitFragment.newInstance(thisRemote);
+				DialogFragment setSpeedLimit = LimitSpeedDialog.newInstance(thisRemote);
 				setSpeedLimit.show(getSupportFragmentManager(), "setSpeedLimitDialog");				
 			break;
 		}
@@ -157,7 +139,7 @@ public class RemoteFragment extends ListFragment {
 
 	@Override
 	public void onListItemClick(ListView l, View v, int position, long id) {
-		Intent detailsIntent = new Intent(getActivity(), RemoteDetailsActivity.class);
+		Intent detailsIntent = new Intent(getActivity(), DetailsActivity.class);
 		detailsIntent.putExtra("selected_remote", remotes.get(position));
 		startActivity(detailsIntent);
 		super.onListItemClick(l, v, position, id);
@@ -191,8 +173,9 @@ public class RemoteFragment extends ListFragment {
 				case LOAD_REMOTE:
 					Cursor cur = db.getAllRows();
 					
-					// Move to the last remote position in the database if
-					// a new remote has been added.
+					/* Move to the last profile position in the database if
+					 * a new profile has been added.
+					 */
 					if(remotes.size() < cur.getCount())
 						cur.moveToPosition(remotes.size()-1);
 					else
@@ -224,20 +207,8 @@ public class RemoteFragment extends ListFragment {
 				break;
 			}
 			
-			if(mAdapter != null) mAdapter.notifyDataSetChanged();			
-			showMessageIfEmpty();
+			if(mAdapter != null) mAdapter.notifyDataSetChanged();
 			super.onPostExecute(result);
-		}
-
-		/*
-		 * Show an informative message if there exists no
-		 * remotes.
-		 */
-		private void showMessageIfEmpty() {
-			if(remotes.size() < 1) {
-				mListView.setVisibility(View.GONE);
-				mEmptyRemoteView.setVisibility(View.VISIBLE);				
-			}
 		}
 	}
 }

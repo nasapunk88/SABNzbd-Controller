@@ -14,12 +14,21 @@
         android:divider="@drawable/divider"
         android:dividerHeight="1dp"
         android:listSelector="@drawable/listview_selector"
-        ptr:headerTextColor="@color/black"/>  
-
+        ptr:headerTextColor="@color/black"/>
+    
     <ViewStub 
-        android:id="@android:id/empty"
+        android:id="@+id/loading"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout="@layout/history_emptystub"/>
+        android:layout="@layout/loading_stub"/>    
+
+    <TextView
+        android:id="@android:id/empty"        
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="@string/empty_remote_history"        
+        android:textAppearance="@android:style/TextAppearance.Medium"
+        android:textColor="@color/black"/>
 
 </LinearLayout>

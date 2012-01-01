@@ -1,4 +1,4 @@
-package com.gmail.at.faint545;
+package com.gmail.at.faint545.tasks;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -15,33 +15,32 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 
+import android.os.AsyncTask;
+import android.support.v4.app.Fragment;
+import android.view.View;
+
+import com.gmail.at.faint545.SabnzbdConstants;
 import com.handmark.pulltorefresh.library.PullToRefreshListView;
 
-import android.app.ProgressDialog;
-import android.content.Context;
-import android.os.AsyncTask;
-
 public class QueueDownloadTask extends AsyncTask<Void, Void, String> {
-	private ProgressDialog progressDialog;
-	private Context mContext;
+	private Fragment mContext;
 	private String url;
 	private String auth_api;
-	private PullToRefreshListView mPtrView;
+	private View mTargetView;
 	
-	public interface DataDownloadTaskListener {
+	public interface QueueDownloadTaskListener {
 		public void onQueueDownloadFinished(String result);
 	}
 	
-	public QueueDownloadTask(Context context,String url,String api,PullToRefreshListView ptrView) {
+	public QueueDownloadTask(Fragment context,String url,String api,View target) {
 		mContext = context;
 		this.url = url;		
 		auth_api = api;
-		mPtrView = ptrView;
+		mTargetView = target;
 	}
 	
 	@Override
 	protected void onPreExecute() {
-		if(mPtrView == null) progressDialog = ProgressDialog.show(mContext, null, "Loading data");
 		super.onPreExecute();
 	}
 
@@ -72,28 +71,27 @@ public class QueueDownloadTask extends AsyncTask<Void, Void, String> {
 			return jsonStringBuilder.toString();
 		} 
 		catch (ClientProtocolException e) {
-			e.printStackTrace();
+			return ClientProtocolException.class.getName();
 		} 
 		catch (IOException e) {
-			e.printStackTrace();
+			return ClientProtocolException.class.getName();
 		}
-		return null;
 	}
 
 	@Override
 	protected void onPostExecute(String result) {
-		DataDownloadTaskListener listener = (DataDownloadTaskListener) mContext;
+		QueueDownloadTaskListener listener = (QueueDownloadTaskListener) mContext;
 		listener.onQueueDownloadFinished(result);
 		cleanup();
 		super.onPostExecute(result);
 	}
 
 	private void cleanup() {
-		if(mPtrView != null) mPtrView.onRefreshComplete();
-		if(progressDialog != null) progressDialog.dismiss();
+		if(mTargetView instanceof PullToRefreshListView) {
+			((PullToRefreshListView) mTargetView).onRefreshComplete();
+		}
 		
-		mPtrView = null;
-		progressDialog = null;		
+		mTargetView = null;
 		mContext = null;
 		url = null;
 		auth_api = null;

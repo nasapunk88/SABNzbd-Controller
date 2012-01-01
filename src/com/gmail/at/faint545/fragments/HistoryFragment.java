@@ -1,5 +1,6 @@
 package com.gmail.at.faint545.fragments;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 import org.apache.http.client.ClientProtocolException;
@@ -18,75 +19,105 @@ import android.support.v4.view.MenuItem;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.View.OnClickListener;
+import android.view.ViewStub;
 import android.widget.CheckBox;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import com.gmail.at.faint545.HistoryActionTask;
-import com.gmail.at.faint545.HistoryActionTask.HistoryActionTaskListener;
 import com.gmail.at.faint545.R;
 import com.gmail.at.faint545.Remote;
 import com.gmail.at.faint545.SabnzbdConstants;
 import com.gmail.at.faint545.adapters.RemoteHistoryAdapter;
+import com.gmail.at.faint545.tasks.HistoryActionTask;
+import com.gmail.at.faint545.tasks.HistoryDownloadTask;
+import com.gmail.at.faint545.tasks.HistoryActionTask.HistoryActionTaskListener;
+import com.gmail.at.faint545.tasks.HistoryDownloadTask.HistoryDownloadTaskListener;
 import com.handmark.pulltorefresh.library.PullToRefreshBase.OnRefreshListener;
 import com.handmark.pulltorefresh.library.PullToRefreshListView;
 
-public class RemoteHistoryFragment extends ListFragment implements HistoryActionTaskListener {
+public class HistoryFragment extends ListFragment implements HistoryActionTaskListener,HistoryDownloadTaskListener {
 	private RemoteHistoryAdapter mAdapter;
 	private ArrayList<JSONObject> mOldJobs = new ArrayList<JSONObject>();
 	private ArrayList<Integer> mSelectedPositions = new ArrayList<Integer>();
-	private RemoteHistoryListener mListener;
 	private PullToRefreshListView mPtrView;
+	private ViewStub loadingStub;
+	private HistoryFragmentListener mFragmentListener;
 	
 	public final static int DELETE = 0x123;
 	
-	public interface RemoteHistoryListener {
-		public void onRefreshHistory(PullToRefreshListView view);
+	public interface HistoryFragmentListener {
+		public void onConnectionError();
 	}
 	
+	/* Default constructor */
+	public static HistoryFragment newInstance(Remote mRemote) {
+		HistoryFragment self = new HistoryFragment();
+		Bundle args = new Bundle();
+		args.putParcelable("remote", mRemote);
+		self.setArguments(args);
+		return self;
+	}
+	
+	@Override
+	public void onAttach(SupportActivity activity) {
+		mFragmentListener = (HistoryFragmentListener) activity;
+		super.onAttach(activity);
+	}
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		setHasOptionsMenu(true);			
 		super.onCreate(savedInstanceState);
 	}	
-	
-	@Override
-	public void onAttach(SupportActivity activity) {
-		mListener = (RemoteHistoryListener) activity;
-		super.onAttach(activity);
-	}
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,Bundle savedInstanceState) {
-		return inflater.inflate(R.layout.remote_history, null);
+		View view = inflater.inflate(R.layout.remote_history, null);
+		mPtrView = (PullToRefreshListView) view.findViewById(R.id.remote_history_ptr);
+		loadingStub = (ViewStub) view.findViewById(R.id.loading);
+		return view;
 	}
 
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
-		mPtrView = (PullToRefreshListView) getView().findViewById(R.id.remote_history_ptr);
+		loadingStub.setVisibility(View.VISIBLE); // Make progressbar visible
+		downloadHistory(null); // Begin downloading
 		getListView().setCacheColorHint(Color.TRANSPARENT); // Optimization for ListView
 		setupListAdapter();
 		initListeners();
 		super.onActivityCreated(savedInstanceState);
 	}
-
+	
 	/*
-	 * Default implementation for initializing listeners for views
+	 * A function to trigger a history download. If a PullToRefreshListView
+	 * is passed through, this indicates that we are going to use the
+	 * PullToRefreshListView to show a loading message.
 	 */
+	private void downloadHistory(PullToRefreshListView usePullToRefresh) {
+		mOldJobs.clear();
+		new HistoryDownloadTask(this, getRemote().buildURL(), getRemote().getApiKey(),usePullToRefresh).execute();
+	}
+
+	/* A helper function to setup the list adapter */
+	private void setupListAdapter() {
+		mAdapter = new RemoteHistoryAdapter(getActivity(), R.layout.remote_history_row, mOldJobs);
+		setListAdapter(mAdapter);
+	}	
+	
+	/* Default implementation for initializing listeners for views */
 	private void initListeners() {
 		mPtrView.setOnRefreshListener(new OnRefreshListener() {
 			@Override
 			public void onRefresh() {
-				mListener.onRefreshHistory(mPtrView);
+				downloadHistory(mPtrView);
 			}			
 		});
 	}
-
+	
 	@Override
 	public void onPrepareOptionsMenu(Menu menu) {
 		menu.clear();
-		// Only show these two options if there are jobs to delete
+		/* Only show these two options if there are jobs to delete */
 		if(mSelectedPositions.size() > 0 && mOldJobs.size() > 0) {
 			menu.add(Menu.NONE,DELETE,Menu.NONE,"Delete selected");
 		}
@@ -103,16 +134,14 @@ public class RemoteHistoryFragment extends ListFragment implements HistoryAction
 			selectedJobs = collectSelectedItems();
 		}
 		switch(item.getItemId()) {
-			case DELETE: // Conditional for deleting all history
+			case DELETE:
 				deleteHistory(selectedJobs);
 			break;
 		}
 		return super.onOptionsItemSelected(item);
 	}
 	
-	/*
-	 * A helper function to collect all the NZO IDs of all selected items/jobs
-	 */
+	/* A helper function to collect all the NZO IDs of all selected items/jobs */
 	private String collectSelectedItems() {
 		StringBuilder selectedJobs;
 		selectedJobs = new StringBuilder();
@@ -130,31 +159,13 @@ public class RemoteHistoryFragment extends ListFragment implements HistoryAction
 		return selectedJobs.substring(0, selectedJobs.lastIndexOf(","));
 	}
 	
-	/*
-	 * A function for when a user selects to delete a specific or all jobs. Refers to: RemoteHistoryFragment.java
-	 */
-	public void deleteHistory(String selectedJobs) {
-		Remote currentRemote = getActivity().getIntent().getParcelableExtra("selected_remote");
-		new HistoryActionTask(this, currentRemote.buildURL(), currentRemote.getApiKey(),HistoryActionTask.DELETE).execute(selectedJobs);
-	}	
-
-	/*
-	 * A helper function to setup the list adapter
-	 */
-	private void setupListAdapter() {
-		mAdapter = new RemoteHistoryAdapter(getActivity(), R.layout.remote_history_row, mOldJobs);
-		setListAdapter(mAdapter);
-	}
-
-	/*
-	 * A handler to handle the event of a list item click
-	 */
+	/* A handler to handle the event of a list item click */
 	@Override
 	public void onListItemClick(ListView l, View v, int position, long id) {
 		CheckBox checkbox = (CheckBox) v.findViewById(R.id.remote_history_checkbox);
-		checkbox.toggle(); // Toggle the checkbox
+		checkbox.toggle(); // Toggle the check box
 		
-		// Add or remove the current position from our list of selected positions
+		/* Add or remove the current position from our list of selected positions */
 		if(checkbox.isChecked()) {
 			mSelectedPositions.add(position);
 			mSelectedPositions.trimToSize();
@@ -164,49 +175,30 @@ public class RemoteHistoryFragment extends ListFragment implements HistoryAction
 			mSelectedPositions.trimToSize();
 		}
 		super.onListItemClick(l, v, position, id);
-	}
-
-	/*
-	 * A function that handles arguments that have been passed through. 
-	 * The is intended to be used immediately after constructing the fragment
-	 * but we are re-purposing it for our own needs. In our case, this will 
-	 * trigger when new history data has been downloaded and the fragment 
-	 * needs to be updated.
-	 */
-	@Override
-	public void setArguments(Bundle args) {
-		String data = args.getString("data");
-		mOldJobs.clear();
-		if(data != null) {
-			try {
-				JSONObject object = new JSONObject(data);
-				object = object.getJSONObject(SabnzbdConstants.MODE_HISTORY);
-				JSONArray array = object.getJSONArray(SabnzbdConstants.SLOTS);
-				
-				for(int x = 0; x < array.length(); x++) {
-					mOldJobs.add(array.getJSONObject(x));
-				}
-			} 
-			catch (JSONException e) {
-				e.printStackTrace();
-			}
-		}
-		attachRefreshListener();
-		if(mAdapter != null)
-			mAdapter.notifyDataSetChanged();
+	}	
+	
+	private AlertDialog buildAlertDialog() {
+		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+		builder.setMessage(R.string.connect_error);
+		builder.setCancelable(false);
+		builder.setNegativeButton(R.string.ok, new DialogInterface.OnClickListener() {			
+			@Override
+			public void onClick(DialogInterface dialog, int which) {}
+		});			
+		return builder.create();
 	}
 	
-	private void attachRefreshListener() {
-		View refresh = getView().findViewById(R.id.history_emptystub_refresh_image);
-		if(refresh != null) {
-			refresh.setOnClickListener(new OnClickListener() {				
-				@Override
-				public void onClick(View v) {
-					mListener.onRefreshHistory(null);
-				}
-			});
-		}
+	private Remote getRemote() {
+		return getArguments().getParcelable("remote");
 	}	
+	
+	/* A function for when a user selects to delete a specific or all jobs. Refers to: RemoteHistoryFragment.java */
+	public void deleteHistory(String selectedJobs) {
+		Remote currentRemote = getActivity().getIntent().getParcelableExtra("selected_remote");
+		new HistoryActionTask(this, currentRemote.buildURL(), currentRemote.getApiKey(),HistoryActionTask.DELETE).execute(selectedJobs);
+	}	
+
+	/* CALLBACK METHODS */
 	
 	/*
 	 * A callback function for when the delete operation has completed. Refers to: DeleteHistoryTask.java
@@ -216,7 +208,7 @@ public class RemoteHistoryFragment extends ListFragment implements HistoryAction
 		try {
 			String status = new JSONObject(result).getString(SabnzbdConstants.STATUS);
 			if(Boolean.parseBoolean(status)) {
-				mListener.onRefreshHistory(null);
+				downloadHistory(null);
 				mSelectedPositions.clear();
 			}
 			else {
@@ -230,19 +222,35 @@ public class RemoteHistoryFragment extends ListFragment implements HistoryAction
 		}
 	}
 	
-	private AlertDialog buildAlertDialog() {
-		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-		builder.setMessage(R.string.connect_error);
-		builder.setCancelable(false);
-		builder.setNegativeButton(R.string.ok, new DialogInterface.OnClickListener() {			
-			@Override
-			public void onClick(DialogInterface dialog, int which) {}
-		});			
-		return builder.create();
-	}	
-
 	@Override
 	public void onHistoryRetryFinished(String result) {
 		// TODO Auto-generated method stub		
-	}		
+	}
+
+	@Override
+	public void onHistoryDownloadFinished(String result) {
+		if(result.equals(ClientProtocolException.class.getName()) || result.equals(IOException.class.getName())) {
+			mFragmentListener.onConnectionError();
+		}
+		else {
+			try {
+				JSONObject object = new JSONObject(result);
+				object = object.getJSONObject(SabnzbdConstants.MODE_HISTORY);
+				JSONArray array = object.getJSONArray(SabnzbdConstants.SLOTS);
+				
+				for(int x = 0; x < array.length(); x++) {
+					mOldJobs.add(array.getJSONObject(x));
+				}
+				
+				if(mAdapter != null) {
+					mAdapter.notifyDataSetChanged();
+				}
+				
+				loadingStub.setVisibility(View.GONE); // Hide progressbar				
+			}
+			catch(JSONException e) {
+				e.printStackTrace();
+			}
+		}		
+	}
 }

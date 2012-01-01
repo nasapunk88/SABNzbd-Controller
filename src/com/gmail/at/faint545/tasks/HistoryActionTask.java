@@ -1,4 +1,4 @@
-package com.gmail.at.faint545;
+package com.gmail.at.faint545.tasks;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -14,6 +14,8 @@ import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
+
+import com.gmail.at.faint545.SabnzbdConstants;
 
 import android.app.ProgressDialog;
 import android.os.AsyncTask;

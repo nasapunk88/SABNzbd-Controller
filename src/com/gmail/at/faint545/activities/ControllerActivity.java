@@ -2,7 +2,6 @@ package com.gmail.at.faint545.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
 import android.view.View;
@@ -18,44 +17,41 @@ import com.gmail.at.faint545.zxing.IntentIntegrator;
 import com.gmail.at.faint545.zxing.IntentResult;
 
 public class ControllerActivity extends FragmentActivity implements NewRemoteListener, RemoteFragmentListener {	
-	private RemoteFragment remoteFragment; // Fragment for viewing remotes
+	private RemoteFragment remoteFragment; // Fragment for viewing a remote
 	private NewRemoteFragment newRemoteFragment; // Fragment for creating a remote	
-	
-    @Override
-    public void onCreate(Bundle savedInstanceState) {    	
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.main);        
-        BugSenseHandler.setup(this, "42fc347a");
-        getSupportActionBar().setDisplayShowTitleEnabled(false);
-        getSupportActionBar().setDisplayUseLogoEnabled(true);
-        //getSupportActionBar().setDisplayShowHomeEnabled(false); // Remove activity/application icon
-        attachFragment(remoteFragment = RemoteFragment.newInstance()); // Attach RemoteFragment to this activity
-    }
 
-	/*
-	 * Attach the RemoteFragment to the current Activity.
-	 */
-	private void attachFragment(Fragment newFragment) {
-		getSupportFragmentManager().beginTransaction().add(R.id.main_framelayout, newFragment).commit();
+	@Override
+	public void onCreate(Bundle savedInstanceState) {    	
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.main);        
+		BugSenseHandler.setup(this, "42fc347a");
+		setupActionBar();		
 	}
-	
+
+	 /* A helper function to setup the Action Bar */
+	private void setupActionBar() {
+		getSupportActionBar().setDisplayShowTitleEnabled(false);
+		getSupportActionBar().setDisplayUseLogoEnabled(true);
+		
+		remoteFragment = RemoteFragment.newInstance();
+		getSupportFragmentManager().beginTransaction().add(R.id.main_framelayout, remoteFragment).commit(); // Attach RemoteFragment to this activity
+	}
+
 	/*
 	 * This function is called when a user edits a remote or
 	 * creates a new one.
 	 */
 	public void launchNewRemoteFragment(Remote remote) {
 		FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-				
-		ft.setCustomAnimations(R.anim.fragment_slide_left_enter, // Set custom transition animations
-										 R.anim.fragment_slide_left_exit,
-										 R.anim.fragment_slide_right_enter,
-										 R.anim.fragment_slide_right_exit);
-		
-		ft.replace(R.id.main_framelayout, newRemoteFragment = new NewRemoteFragment(remote));
+
+		/* Set custom transition animations */
+		ft.setCustomAnimations(R.anim.fragment_slide_left_enter, R.anim.fragment_slide_left_exit, R.anim.fragment_slide_right_enter, R.anim.fragment_slide_right_exit);
+
+		ft.replace(R.id.main_framelayout, newRemoteFragment = NewRemoteFragment.newInstance(remote));
 		ft.addToBackStack(null);
 		ft.commit();
 	}
-	
+
 	/*
 	 * This function is called when QR button is clicked
 	 */
@@ -63,18 +59,28 @@ public class ControllerActivity extends FragmentActivity implements NewRemoteLis
 		IntentIntegrator integrator = new IntentIntegrator(this);
 		integrator.initiateScan();
 	}
-	
-	// Below here are callback functions
-	
-	/*
-	 * This function is called when a remote has been saved
-	 */
+
+	/* CALLBACK METHODS */
+
+	/* This function is called when a remote has been saved */
 	@Override
 	public void onRemoteSaved() {
-		remoteFragment.loadRemotes();
+		remoteFragment.loadProfiles();
 		getSupportFragmentManager().popBackStack(); // Pop off the last saved state
 		newRemoteFragment = null;
 	}	
+
+	/* This function is called when a user wants to edit a remote */
+	@Override
+	public void onEditRemote(Remote targetRemote) {
+		launchNewRemoteFragment(targetRemote);
+	}
+
+	/* This function is called when a user want to add a remote */
+	@Override
+	public void onAddRemoteClicked() {
+		launchNewRemoteFragment(null);
+	}
 	
 	@Override
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -83,22 +89,5 @@ public class ControllerActivity extends FragmentActivity implements NewRemoteLis
 			newRemoteFragment.populateApiKey(result.getContents());
 		}
 		super.onActivityResult(requestCode, resultCode, data);
-	}
-
-	/*
-	 * Called when a user wants to edit a remote via long press
-	 */
-	@Override
-	public void onEditRemote(Remote targetRemote) {
-		launchNewRemoteFragment(targetRemote);
-	}
-
-	/*
-	 * Called when a user wants to add a remote by clicking the
-	 * "Add Remote" button
-	 */
-	@Override
-	public void onAddRemoteClicked() {
-		launchNewRemoteFragment(null);
-	}
+	}	
 }

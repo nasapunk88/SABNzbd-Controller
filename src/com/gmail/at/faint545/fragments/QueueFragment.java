@@ -19,58 +19,75 @@ import android.support.v4.view.Menu;
 import android.support.v4.view.MenuItem;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.view.ViewStub;
 import android.widget.CheckBox;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.gmail.at.faint545.QueueActionTask;
-import com.gmail.at.faint545.QueueActionTask.QueueActionTaskListener;
 import com.gmail.at.faint545.R;
 import com.gmail.at.faint545.Remote;
 import com.gmail.at.faint545.SabnzbdConstants;
 import com.gmail.at.faint545.adapters.RemoteQueueAdapter;
+import com.gmail.at.faint545.tasks.QueueActionTask;
+import com.gmail.at.faint545.tasks.QueueDownloadTask;
+import com.gmail.at.faint545.tasks.QueueActionTask.QueueActionTaskListener;
+import com.gmail.at.faint545.tasks.QueueDownloadTask.QueueDownloadTaskListener;
 import com.handmark.pulltorefresh.library.PullToRefreshBase.OnRefreshListener;
 import com.handmark.pulltorefresh.library.PullToRefreshListView;
 
-public class RemoteQueueFragment extends ListFragment implements QueueActionTaskListener {
+public class QueueFragment extends ListFragment implements QueueActionTaskListener,QueueDownloadTaskListener {
 	private RemoteQueueAdapter mAdapter;
 	private ArrayList<JSONObject> mJobs = new ArrayList<JSONObject>();
 	private ArrayList<Integer> mSelectedPositions = new ArrayList<Integer>();
 	private PullToRefreshListView mPtrView;
-	private RemoteQueueListener mListener;
+	private ViewStub loadingStub;
+	private QueueFragmentListener mFragmentListener;
 	
 	public final static int DELETE = 0x321;
 	public final static int PAUSE = DELETE >> 1;
 	public final static int RESUME = PAUSE >> 1;
 	
-	public interface RemoteQueueListener {
-		public void onRefreshQueue(PullToRefreshListView view);
+	public interface QueueFragmentListener {
+		public void onConnectionError();
 	}
 	
+	/*
+	 * Default constructor
+	 */
+	public static QueueFragment newInstance(Remote mRemote) {
+		QueueFragment self = new QueueFragment();
+		Bundle args = new Bundle();
+		args.putParcelable("remote", mRemote);
+		self.setArguments(args);
+		return self;
+	}	
+	
+	@Override
+	public void onAttach(SupportActivity activity) {
+		mFragmentListener = (QueueFragmentListener) activity;
+		super.onAttach(activity);
+	}
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		setHasOptionsMenu(true);
 		super.onCreate(savedInstanceState);
 	}
-
-	@Override
-	public void onAttach(SupportActivity activity) {
-		mListener = (RemoteQueueListener) activity;
-		super.onAttach(activity);
-	}	
 	
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,Bundle savedInstanceState) {
 		View view = inflater.inflate(R.layout.remote_queue, null);
 		mPtrView = (PullToRefreshListView) view.findViewById(R.id.remote_queue_ptr);
+		loadingStub = (ViewStub) view.findViewById(R.id.loading);
 		return view;
 	}
 		
 	@Override
-	public void onActivityCreated(Bundle savedInstanceState) {				
+	public void onActivityCreated(Bundle savedInstanceState) {
+		loadingStub.setVisibility(View.VISIBLE); // Make progress bar visible
+		downloadQueue(null);
 		setupListView();
 		setupListAdapter();
 		initListeners();
@@ -85,6 +102,11 @@ public class RemoteQueueFragment extends ListFragment implements QueueActionTask
 		View footer = inflater.inflate(R.layout.remote_queue_footer, null);
 		getListView().addFooterView(footer,null,false);
 	}
+	
+	private void downloadQueue(View viewToUse) {
+		mJobs.clear();
+		new QueueDownloadTask(this, getRemote().buildURL(),getRemote().getApiKey(),viewToUse).execute();
+	}	
 	
 	@Override
 	public void onPrepareOptionsMenu(Menu menu) {
@@ -127,6 +149,7 @@ public class RemoteQueueFragment extends ListFragment implements QueueActionTask
 	private String collectSelectedItems() {
 		StringBuilder selectedJobs;
 		selectedJobs = new StringBuilder();
+		
 		// Create a string of jobs to delete, separated by commas i.e: job1,job2,job3
 		for(int position : mSelectedPositions) {				
 			JSONObject job = mJobs.get(position);
@@ -144,7 +167,7 @@ public class RemoteQueueFragment extends ListFragment implements QueueActionTask
 	@Override
 	public void onListItemClick(ListView l, View v, int position, long id) {
 		CheckBox checkbox = (CheckBox) v.findViewById(R.id.remote_queue_checkbox);
-		checkbox.toggle(); // Toggle the checkbox
+		checkbox.toggle(); // Toggle the check box
 		
 		// Add or remove the current position from our list of selected positions
 		if(checkbox.isChecked()) {
@@ -165,7 +188,7 @@ public class RemoteQueueFragment extends ListFragment implements QueueActionTask
 		mPtrView.setOnRefreshListener(new OnRefreshListener() {
 			@Override
 			public void onRefresh() {
-				mListener.onRefreshQueue(mPtrView);
+				downloadQueue(mPtrView);
 			}
 		});
 	}
@@ -176,42 +199,6 @@ public class RemoteQueueFragment extends ListFragment implements QueueActionTask
 	private void setupListAdapter() {
 		mAdapter = new RemoteQueueAdapter(getActivity(), R.layout.remote_queue_row, mJobs);
 		setListAdapter(mAdapter);
-	}
-
-	@Override
-	public void setArguments(Bundle args) {
-		String data = args.getString("data");
-		mJobs.clear();
-		if(data != null) {
-			try {
-				JSONObject object = new JSONObject(data).getJSONObject(SabnzbdConstants.MODE_QUEUE);				
-				populateFooterView(object);				
-				JSONArray array = object.getJSONArray(SabnzbdConstants.SLOTS);
-				
-				for(int x = 0; x < array.length(); x++) {
-					mJobs.add(array.getJSONObject(x));
-				}
-			} 
-			catch (JSONException e) {
-				e.printStackTrace();
-			}
-		}
-		attachRefreshListener();
-		if(mAdapter != null) {
-			mAdapter.notifyDataSetChanged();
-		}	
-	}
-
-	private void attachRefreshListener() {
-		View refresh = getView().findViewById(R.id.queue_emptystub_refresh_image);
-		if(refresh != null) {
-			refresh.setOnClickListener(new OnClickListener() {				
-				@Override
-				public void onClick(View v) {
-					mListener.onRefreshQueue(null);
-				}
-			});
-		}
 	}
 
 	private void populateFooterView(JSONObject object) throws JSONException {
@@ -241,7 +228,7 @@ public class RemoteQueueFragment extends ListFragment implements QueueActionTask
 		try {
 			String status = new JSONObject(result).getString(SabnzbdConstants.STATUS);
 			if(Boolean.parseBoolean(status)){
-				mListener.onRefreshQueue(null);
+				downloadQueue(null);
 				mSelectedPositions.clear();
 			}
 			else {
@@ -267,5 +254,36 @@ public class RemoteQueueFragment extends ListFragment implements QueueActionTask
 	}
 
 	@Override
-	public void onSpeedLimitFinished(String result) {}		
+	public void onSpeedLimitFinished(String result) {}
+	
+	private Remote getRemote() {
+		return getArguments().getParcelable("remote");
+	}
+
+	@Override
+	public void onQueueDownloadFinished(String result) {
+		if(result.equals(ClientProtocolException.class.getName()) || result.equals(IOException.class.getName())) {
+			mFragmentListener.onConnectionError();
+		}
+		else {
+			try {
+				JSONObject object = new JSONObject(result).getJSONObject(SabnzbdConstants.MODE_QUEUE);				
+				populateFooterView(object);				
+				JSONArray array = object.getJSONArray(SabnzbdConstants.SLOTS);
+				
+				for(int x = 0; x < array.length(); x++) {
+					mJobs.add(array.getJSONObject(x));
+				}
+				
+				if(mAdapter != null) {
+					mAdapter.notifyDataSetChanged();
+				}
+				
+				loadingStub.setVisibility(View.GONE); // Hide progressbar
+			} 
+			catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+	}
 }

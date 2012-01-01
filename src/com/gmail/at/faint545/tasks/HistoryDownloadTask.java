@@ -1,4 +1,4 @@
-package com.gmail.at.faint545;
+package com.gmail.at.faint545.tasks;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -15,46 +15,39 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 
+import android.os.AsyncTask;
+import android.support.v4.app.Fragment;
+
+import com.gmail.at.faint545.SabnzbdConstants;
 import com.handmark.pulltorefresh.library.PullToRefreshListView;
 
-import android.app.ProgressDialog;
-import android.content.Context;
-import android.os.AsyncTask;
-
 public class HistoryDownloadTask extends AsyncTask<Void, Void, String> {
-	private ProgressDialog progressDialog;
-	private Context mContext;
+	private Fragment mContext;
 	private String url;
-	private String auth_api;
-	private PullToRefreshListView mPtrView;
-	
+	private String api;
+	private PullToRefreshListView usePtr;
+
 	public interface HistoryDownloadTaskListener {
 		public void onHistoryDownloadFinished(String result);
 	}
-	
-	public HistoryDownloadTask(Context context,String url,String api,PullToRefreshListView ptrView) {
+
+	public HistoryDownloadTask(Fragment context,String url,String api,PullToRefreshListView usePullToRefresh) {
 		mContext = context;
 		this.url = url;
-		auth_api = api;
-		mPtrView = ptrView;
-	}
-	
-	@Override
-	protected void onPreExecute() {
-		if(mPtrView == null) progressDialog = ProgressDialog.show(mContext, null, "Loading data");
-		super.onPreExecute();
+		this.api = api;
+		usePtr = usePullToRefresh;
 	}
 
 	@Override
 	protected String doInBackground(Void... params) {
 		HttpClient client = new DefaultHttpClient();
 		HttpPost request = new HttpPost(url);
-		
+
 		ArrayList<NameValuePair> arguments = new ArrayList<NameValuePair>();
-		arguments.add(new BasicNameValuePair(SabnzbdConstants.APIKEY, auth_api));
+		arguments.add(new BasicNameValuePair(SabnzbdConstants.APIKEY, api));
 		arguments.add(new BasicNameValuePair(SabnzbdConstants.OUTPUT, SabnzbdConstants.OUTPUT_JSON));
 		arguments.add(new BasicNameValuePair(SabnzbdConstants.MODE, SabnzbdConstants.MODE_HISTORY));
-		
+
 		try {
 			request.setEntity(new UrlEncodedFormEntity(arguments));
 			HttpResponse result = client.execute(request);
@@ -72,12 +65,11 @@ public class HistoryDownloadTask extends AsyncTask<Void, Void, String> {
 			return jsonStringBuilder.toString();
 		} 
 		catch (ClientProtocolException e) {
-			e.printStackTrace();
+			return ClientProtocolException.class.getName();
 		} 
 		catch (IOException e) {
-			e.printStackTrace();
+			return IOException.class.getName();
 		}
-		return null;
 	}
 
 	@Override
@@ -89,13 +81,13 @@ public class HistoryDownloadTask extends AsyncTask<Void, Void, String> {
 	}
 
 	private void cleanup() {
-		if(mPtrView != null) mPtrView.onRefreshComplete();
-		if(progressDialog != null) progressDialog.dismiss();
-		
-		mPtrView = null;
-		progressDialog = null;		
+		if(usePtr != null) {
+			usePtr.onRefreshComplete();
+		}
+
+		usePtr = null;		
 		mContext = null;
 		url = null;
-		auth_api = null;
+		api = null;
 	}
 }

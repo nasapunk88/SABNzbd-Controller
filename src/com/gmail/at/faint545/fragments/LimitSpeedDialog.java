@@ -15,18 +15,18 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.gmail.at.faint545.QueueActionTask;
-import com.gmail.at.faint545.QueueActionTask.QueueActionTaskListener;
+import com.gmail.at.faint545.tasks.QueueActionTask;
+import com.gmail.at.faint545.tasks.QueueActionTask.QueueActionTaskListener;
 import com.gmail.at.faint545.R;
 import com.gmail.at.faint545.Remote;
 import com.gmail.at.faint545.SabnzbdConstants;
 
-public class SpeedLimitFragment extends DialogFragment implements QueueActionTaskListener {
+public class LimitSpeedDialog extends DialogFragment implements QueueActionTaskListener {
 	private EditText valueEditText;
 	private Button ok;
 	
-	public static SpeedLimitFragment newInstance(Remote remote) {
-		SpeedLimitFragment self = new SpeedLimitFragment();
+	public static LimitSpeedDialog newInstance(Remote remote) {
+		LimitSpeedDialog self = new LimitSpeedDialog();
 		Bundle arguments = new Bundle();
 		arguments.putParcelable("remote", remote);
 		self.setArguments(arguments);
@@ -73,7 +73,7 @@ public class SpeedLimitFragment extends DialogFragment implements QueueActionTas
 			public void onClick(View arg0) {
 				String value = valueEditText.getText().toString();
 				Remote targetRemote = getArguments().getParcelable("remote");
-				new QueueActionTask(SpeedLimitFragment.this, targetRemote.buildURL(), targetRemote.getApiKey(), QueueActionTask.SPEEDLIMIT).execute(value);
+				new QueueActionTask(LimitSpeedDialog.this, targetRemote.buildURL(), targetRemote.getApiKey(), QueueActionTask.SPEEDLIMIT).execute(value);
 			}
 		});
 	}
