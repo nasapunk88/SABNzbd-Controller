@@ -10,6 +10,7 @@ import org.json.JSONObject;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -103,7 +104,7 @@ public class QueueFragment extends ListFragment implements QueueActionTaskListen
 		getListView().addFooterView(footer,null,false);
 	}
 	
-	private void downloadQueue(View viewToUse) {
+	private void downloadQueue(Object viewToUse) {
 		mJobs.clear();
 		new QueueDownloadTask(this, getRemote().buildURL(),getRemote().getApiKey(),viewToUse).execute();
 	}	
@@ -228,7 +229,7 @@ public class QueueFragment extends ListFragment implements QueueActionTaskListen
 		try {
 			String status = new JSONObject(result).getString(SabnzbdConstants.STATUS);
 			if(Boolean.parseBoolean(status)){
-				downloadQueue(null);
+				downloadQueue(ProgressDialog.show(getActivity(), null, "Loading data"));
 				mSelectedPositions.clear();
 			}
 			else {

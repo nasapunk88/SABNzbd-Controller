@@ -11,6 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.CheckBox;
 import android.widget.TextView;
 
 import com.gmail.at.faint545.R;
@@ -38,13 +39,15 @@ public class RemoteQueueAdapter extends ArrayAdapter<JSONObject> {
 			viewHolder.progress = (TextView) convertView.findViewById(R.id.remote_queue_row_progress);
 			viewHolder.status = (TextView) convertView.findViewById(R.id.remote_queue_row_status);
 			viewHolder.statusIndicator = convertView.findViewById(R.id.remote_queue_status_indicator);
+			viewHolder.checkBox = (CheckBox) convertView.findViewById(R.id.remote_queue_checkbox);
 			convertView.setTag(viewHolder);
 		}
-			
+					
 		JSONObject job = jobs.get(position);
 		if(job != null) {
 			StringBuilder jobProgress = new StringBuilder();
 			ViewHolder viewHolder = (ViewHolder) convertView.getTag();
+			viewHolder.checkBox.setChecked(false);
 			try {
 				String statusText = job.getString(SabnzbdConstants.STATUS);
 				String mbLeft = StringUtils.normalizeSize(job.getString(SabnzbdConstants.MBLEFT), "m");
@@ -76,5 +79,6 @@ public class RemoteQueueAdapter extends ArrayAdapter<JSONObject> {
 		TextView progress;
 		TextView status;
 		View statusIndicator;
+		CheckBox checkBox;
 	}
 }

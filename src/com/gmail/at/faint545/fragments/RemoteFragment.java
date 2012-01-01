@@ -33,7 +33,6 @@ import com.gmail.at.faint545.databases.RemoteDatabase;
 public class RemoteFragment extends ListFragment {
 	private static RemoteFragmentAdapter mAdapter;
 	private static ListView mListView;
-	private static View mEmptyRemoteView;
 	private Button mAddRemote;
 	private static ArrayList<Remote> remotes = new ArrayList<Remote>();
 	
@@ -70,7 +69,6 @@ public class RemoteFragment extends ListFragment {
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		View view = inflater.inflate(R.layout.remote, null);
-		mEmptyRemoteView = (Button) view.findViewById(R.id.remote_add_remote);
 		mAddRemote = (Button) view.findViewById(R.id.remote_add_remote);
 		
 		mAddRemote.setOnClickListener(new OnClickListener() {

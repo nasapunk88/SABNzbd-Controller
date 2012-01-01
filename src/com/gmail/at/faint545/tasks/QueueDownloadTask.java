@@ -15,9 +15,9 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 
+import android.app.ProgressDialog;
 import android.os.AsyncTask;
 import android.support.v4.app.Fragment;
-import android.view.View;
 
 import com.gmail.at.faint545.SabnzbdConstants;
 import com.handmark.pulltorefresh.library.PullToRefreshListView;
@@ -26,22 +26,17 @@ public class QueueDownloadTask extends AsyncTask<Void, Void, String> {
 	private Fragment mContext;
 	private String url;
 	private String auth_api;
-	private View mTargetView;
+	private Object mTargetView;
 	
 	public interface QueueDownloadTaskListener {
 		public void onQueueDownloadFinished(String result);
 	}
 	
-	public QueueDownloadTask(Fragment context,String url,String api,View target) {
+	public QueueDownloadTask(Fragment context,String url,String api,Object target) {
 		mContext = context;
 		this.url = url;		
 		auth_api = api;
 		mTargetView = target;
-	}
-	
-	@Override
-	protected void onPreExecute() {
-		super.onPreExecute();
 	}
 
 	@Override
@@ -90,7 +85,10 @@ public class QueueDownloadTask extends AsyncTask<Void, Void, String> {
 		if(mTargetView instanceof PullToRefreshListView) {
 			((PullToRefreshListView) mTargetView).onRefreshComplete();
 		}
-		
+		else if(mTargetView instanceof ProgressDialog) {
+			((ProgressDialog) mTargetView).dismiss();
+		}
+				
 		mTargetView = null;
 		mContext = null;
 		url = null;

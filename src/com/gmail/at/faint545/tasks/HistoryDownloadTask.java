@@ -15,6 +15,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 
+import android.app.ProgressDialog;
 import android.os.AsyncTask;
 import android.support.v4.app.Fragment;
 
@@ -25,17 +26,17 @@ public class HistoryDownloadTask extends AsyncTask<Void, Void, String> {
 	private Fragment mContext;
 	private String url;
 	private String api;
-	private PullToRefreshListView usePtr;
+	private Object mTargetView;
 
 	public interface HistoryDownloadTaskListener {
 		public void onHistoryDownloadFinished(String result);
 	}
 
-	public HistoryDownloadTask(Fragment context,String url,String api,PullToRefreshListView usePullToRefresh) {
+	public HistoryDownloadTask(Fragment context,String url,String api,Object target) {
 		mContext = context;
 		this.url = url;
 		this.api = api;
-		usePtr = usePullToRefresh;
+		mTargetView = target;
 	}
 
 	@Override
@@ -81,11 +82,14 @@ public class HistoryDownloadTask extends AsyncTask<Void, Void, String> {
 	}
 
 	private void cleanup() {
-		if(usePtr != null) {
-			usePtr.onRefreshComplete();
+		if(mTargetView instanceof PullToRefreshListView) {
+			((PullToRefreshListView) mTargetView).onRefreshComplete();
+		}
+		else if(mTargetView instanceof ProgressDialog) {
+			((ProgressDialog) mTargetView).dismiss();
 		}
 
-		usePtr = null;		
+		mTargetView = null;		
 		mContext = null;
 		url = null;
 		api = null;

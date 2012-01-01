@@ -9,6 +9,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -93,9 +94,9 @@ public class HistoryFragment extends ListFragment implements HistoryActionTaskLi
 	 * is passed through, this indicates that we are going to use the
 	 * PullToRefreshListView to show a loading message.
 	 */
-	private void downloadHistory(PullToRefreshListView usePullToRefresh) {
+	private void downloadHistory(Object target) {
 		mOldJobs.clear();
-		new HistoryDownloadTask(this, getRemote().buildURL(), getRemote().getApiKey(),usePullToRefresh).execute();
+		new HistoryDownloadTask(this, getRemote().buildURL(), getRemote().getApiKey(),target).execute();
 	}
 
 	/* A helper function to setup the list adapter */
@@ -208,7 +209,7 @@ public class HistoryFragment extends ListFragment implements HistoryActionTaskLi
 		try {
 			String status = new JSONObject(result).getString(SabnzbdConstants.STATUS);
 			if(Boolean.parseBoolean(status)) {
-				downloadHistory(null);
+				downloadHistory(ProgressDialog.show(getActivity(), null, "Loading data"));
 				mSelectedPositions.clear();
 			}
 			else {
