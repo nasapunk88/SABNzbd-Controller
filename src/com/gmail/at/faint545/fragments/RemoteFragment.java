@@ -30,7 +30,14 @@ import com.gmail.at.faint545.activities.RemoteDetailsActivity;
 import com.gmail.at.faint545.adapters.RemoteFragmentAdapter;
 import com.gmail.at.faint545.databases.RemoteDatabase;
 
+/**
+ * @author  alex
+ */
 public class RemoteFragment extends ListFragment {
+	/**
+	 * @uml.property  name="mAdapter"
+	 * @uml.associationEnd  
+	 */
 	private static RemoteFragmentAdapter mAdapter;
 	private static ListView mListView;
 	private static View mEmptyRemoteView;
@@ -42,6 +49,10 @@ public class RemoteFragment extends ListFragment {
 	public 	static final int LOAD_REMOTE = DELETE_REMOTE >> 2;
 	public 	static final int SET_SPEED_LIMIT = LOAD_REMOTE >> 2;
 	
+	/**
+	 * @uml.property  name="mListener"
+	 * @uml.associationEnd  
+	 */
 	private RemoteFragmentListener mListener;	
 
 	/*
@@ -158,7 +169,8 @@ public class RemoteFragment extends ListFragment {
 	 */
 	private static class DatabaseTask extends AsyncTask<Integer, Void, Long> {
 		private WeakReference<Activity> mWeakContext;
-		private int request,position;
+		private int request;
+		private int position;
 				
 		public DatabaseTask(Activity context) {
 			mWeakContext = new WeakReference<Activity>(context);

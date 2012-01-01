@@ -32,65 +32,12 @@ import android.net.Uri;
 import android.util.Log;
 
 /**
- * <p>A utility class which helps ease integration with Barcode Scanner via {@link Intent}s. This is a simple
- * way to invoke barcode scanning and receive the result, without any need to integrate, modify, or learn the
- * project's source code.</p>
- *
- * <h2>Initiating a barcode scan</h2>
- *
- * <p>To integrate, create an instance of {@code IntentIntegrator} and call {@link #initiateScan()} and wait
- * for the result in your app.</p>
- *
- * <p>It does require that the Barcode Scanner (or work-alike) application is installed. The
- * {@link #initiateScan()} method will prompt the user to download the application, if needed.</p>
- *
- * <p>There are a few steps to using this integration. First, your {@link Activity} must implement
- * the method {@link Activity#onActivityResult(int, int, Intent)} and include a line of code like this:</p>
- *
- * <pre>{@code
- * public void onActivityResult(int requestCode, int resultCode, Intent intent) {
- *   IntentResult scanResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, intent);
- *   if (scanResult != null) {
- *     // handle scan result
- *   }
- *   // else continue with any other code you need in the method
- *   ...
- * }
- * }</pre>
- *
- * <p>This is where you will handle a scan result.</p>
- *
- * <p>Second, just call this in response to a user action somewhere to begin the scan process:</p>
- *
- * <pre>{@code
- * IntentIntegrator integrator = new IntentIntegrator(yourActivity);
- * integrator.initiateScan();
- * }</pre>
- *
- * <p>Note that {@link #initiateScan()} returns an {@link AlertDialog} which is non-null if the
- * user was prompted to download the application. This lets the calling app potentially manage the dialog.
- * In particular, ideally, the app dismisses the dialog if it's still active in its {@link Activity#onPause()}
- * method.</p>
- * 
- * <p>You can use {@link #setTitle(String)} to customize the title of this download prompt dialog (or, use
- * {@link #setTitleByID(int)} to set the title by string resource ID.) Likewise, the prompt message, and
- * yes/no button labels can be changed.</p>
- * 
- * <p>By default, this will only allow applications that are known to respond to this intent correctly
- * do so. The apps that are allowed to response can be set with {@link #setTargetApplications(Collection)}.
- * For example, set to {@link #TARGET_BARCODE_SCANNER_ONLY} to only target the Barcode Scanner app itself.</p>
- *
- * <h2>Sharing text via barcode</h2>
- *
- * <p>To share text, encoded as a QR Code on-screen, similarly, see {@link #shareText(CharSequence)}.</p>
- *
- * <p>Some code, particularly download integration, was contributed from the Anobiit application.</p>
- *
- * @author Sean Owen
- * @author Fred Lin
- * @author Isaac Potoczny-Jones
- * @author Brad Drehmer
- * @author gcstang
+ * <p>A utility class which helps ease integration with Barcode Scanner via  {@link Intent} s. This is a simple way to invoke barcode scanning and receive the result, without any need to integrate, modify, or learn the project's source code.</p> <h2>Initiating a barcode scan</h2> <p>To integrate, create an instance of  {@code  IntentIntegrator}  and call  {@link #initiateScan()}  and wait for the result in your app.</p> <p>It does require that the Barcode Scanner (or work-alike) application is installed. The {@link #initiateScan()}  method will prompt the user to download the application, if needed.</p> <p>There are a few steps to using this integration. First, your  {@link Activity}  must implement the method  {@link Activity#onActivityResult(int,int,Intent)}  and include a line of code like this:</p> <pre> {@code} public void onActivityResult(int requestCode, int resultCode, Intent intent)  IntentResult scanResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, intent); if (scanResult != null) { // handle scan result } // else continue with any other code you need in the method ... } }</pre> <p>This is where you will handle a scan result.</p> <p>Second, just call this in response to a user action somewhere to begin the scan process:</p> <pre> {@code  IntentIntegrator integrator = new IntentIntegrator(yourActivity);  integrator.initiateScan();} </pre> <p>Note that  {@link #initiateScan()}  returns an  {@link AlertDialog}  which is non-null if the user was prompted to download the application. This lets the calling app potentially manage the dialog. In particular, ideally, the app dismisses the dialog if it's still active in its  {@link Activity#onPause()} method.</p> <p>You can use  {@link #setTitle(String)}  to customize the title of this download prompt dialog (or, use {@link #setTitleByID(int)}  to set the title by string resource ID.) Likewise, the prompt message, and yes/no button labels can be changed.</p> <p>By default, this will only allow applications that are known to respond to this intent correctly do so. The apps that are allowed to response can be set with  {@link #setTargetApplications(Collection)} . For example, set to  {@link #TARGET_BARCODE_SCANNER_ONLY}  to only target the Barcode Scanner app itself.</p> <h2>Sharing text via barcode</h2> <p>To share text, encoded as a QR Code on-screen, similarly, see  {@link #shareText(CharSequence)} .</p> <p>Some code, particularly download integration, was contributed from the Anobiit application.</p>
+ * @author  Sean Owen
+ * @author  Fred Lin
+ * @author  Isaac Potoczny-Jones
+ * @author  Brad Drehmer
+ * @author  gcstang
  */
 public final class IntentIntegrator {
 
@@ -124,11 +71,26 @@ public final class IntentIntegrator {
       );
   
   private final Activity activity;
-  private String title;
-  private String message;
-  private String buttonYes;
-  private String buttonNo;
-  private Collection<String> targetApplications;
+  /**
+ * @uml.property  name="title"
+ */
+private String title;
+  /**
+ * @uml.property  name="message"
+ */
+private String message;
+  /**
+ * @uml.property  name="buttonYes"
+ */
+private String buttonYes;
+  /**
+ * @uml.property  name="buttonNo"
+ */
+private String buttonNo;
+  /**
+ * @uml.property  name="targetApplications"
+ */
+private Collection<String> targetApplications;
   
   public IntentIntegrator(Activity activity) {
     this.activity = activity;
@@ -139,11 +101,19 @@ public final class IntentIntegrator {
     targetApplications = TARGET_ALL_KNOWN;
   }
   
-  public String getTitle() {
+  /**
+ * @return
+ * @uml.property  name="title"
+ */
+public String getTitle() {
     return title;
   }
   
-  public void setTitle(String title) {
+  /**
+ * @param title
+ * @uml.property  name="title"
+ */
+public void setTitle(String title) {
     this.title = title;
   }
 
@@ -151,11 +121,19 @@ public final class IntentIntegrator {
     title = activity.getString(titleID);
   }
 
-  public String getMessage() {
+  /**
+ * @return
+ * @uml.property  name="message"
+ */
+public String getMessage() {
     return message;
   }
 
-  public void setMessage(String message) {
+  /**
+ * @param message
+ * @uml.property  name="message"
+ */
+public void setMessage(String message) {
     this.message = message;
   }
 
@@ -163,11 +141,19 @@ public final class IntentIntegrator {
     message = activity.getString(messageID);
   }
 
-  public String getButtonYes() {
+  /**
+ * @return
+ * @uml.property  name="buttonYes"
+ */
+public String getButtonYes() {
     return buttonYes;
   }
 
-  public void setButtonYes(String buttonYes) {
+  /**
+ * @param buttonYes
+ * @uml.property  name="buttonYes"
+ */
+public void setButtonYes(String buttonYes) {
     this.buttonYes = buttonYes;
   }
 
@@ -175,11 +161,19 @@ public final class IntentIntegrator {
     buttonYes = activity.getString(buttonYesID);
   }
 
-  public String getButtonNo() {
+  /**
+ * @return
+ * @uml.property  name="buttonNo"
+ */
+public String getButtonNo() {
     return buttonNo;
   }
 
-  public void setButtonNo(String buttonNo) {
+  /**
+ * @param buttonNo
+ * @uml.property  name="buttonNo"
+ */
+public void setButtonNo(String buttonNo) {
     this.buttonNo = buttonNo;
   }
 
@@ -187,11 +181,19 @@ public final class IntentIntegrator {
     buttonNo = activity.getString(buttonNoID);
   }
   
-  public Collection<String> getTargetApplications() {
+  /**
+ * @return
+ * @uml.property  name="targetApplications"
+ */
+public Collection<String> getTargetApplications() {
     return targetApplications;
   }
   
-  public void setTargetApplications(Collection<String> targetApplications) {
+  /**
+ * @param targetApplications
+ * @uml.property  name="targetApplications"
+ */
+public void setTargetApplications(Collection<String> targetApplications) {
     this.targetApplications = targetApplications;
   }
   

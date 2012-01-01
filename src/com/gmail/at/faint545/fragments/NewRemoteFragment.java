@@ -18,10 +18,24 @@ import com.gmail.at.faint545.R;
 import com.gmail.at.faint545.Remote;
 import com.gmail.at.faint545.databases.RemoteDatabase;
 
+/**
+ * @author  alex
+ */
 public class NewRemoteFragment extends Fragment {
-	private EditText nickEditText, addressEditText, portEditText, apiKeyEditText;
+	private EditText nickEditText;
+	private EditText addressEditText;
+	private EditText portEditText;
+	private EditText apiKeyEditText;
 	private Button saveRemote;
+	/**
+	 * @uml.property  name="remoteListener"
+	 * @uml.associationEnd  
+	 */
 	private NewRemoteListener remoteListener;
+	/**
+	 * @uml.property  name="mRemote"
+	 * @uml.associationEnd  
+	 */
 	private Remote mRemote;
 	
 	public interface NewRemoteListener {

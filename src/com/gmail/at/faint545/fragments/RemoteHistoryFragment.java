@@ -18,6 +18,7 @@ import android.support.v4.view.MenuItem;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.View.OnClickListener;
 import android.widget.CheckBox;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -190,9 +191,22 @@ public class RemoteHistoryFragment extends ListFragment implements HistoryAction
 				e.printStackTrace();
 			}
 		}
+		attachRefreshListener();
 		if(mAdapter != null)
 			mAdapter.notifyDataSetChanged();
 	}
+	
+	private void attachRefreshListener() {
+		View refresh = getView().findViewById(R.id.history_emptystub_refresh_image);
+		if(refresh != null) {
+			refresh.setOnClickListener(new OnClickListener() {				
+				@Override
+				public void onClick(View v) {
+					mListener.onRefreshHistory(null);
+				}
+			});
+		}
+	}	
 	
 	/*
 	 * A callback function for when the delete operation has completed. Refers to: DeleteHistoryTask.java

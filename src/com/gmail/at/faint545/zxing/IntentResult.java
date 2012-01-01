@@ -17,17 +17,31 @@
 package com.gmail.at.faint545.zxing;
 
 /**
- * <p>Encapsulates the result of a barcode scan invoked through {@link IntentIntegrator}.</p>
- *
- * @author Sean Owen
+ * <p>Encapsulates the result of a barcode scan invoked through  {@link IntentIntegrator} .</p>
+ * @author  Sean Owen
  */
 public final class IntentResult {
 
-  private final String contents;
-  private final String formatName;
-  private final byte[] rawBytes;
-  private final Integer orientation;
-  private final String errorCorrectionLevel;
+  /**
+ * @uml.property  name="contents"
+ */
+private final String contents;
+  /**
+ * @uml.property  name="formatName"
+ */
+private final String formatName;
+  /**
+ * @uml.property  name="rawBytes"
+ */
+private final byte[] rawBytes;
+  /**
+ * @uml.property  name="orientation"
+ */
+private final Integer orientation;
+  /**
+ * @uml.property  name="errorCorrectionLevel"
+ */
+private final String errorCorrectionLevel;
 
   IntentResult() {
     this(null, null, null, null, null);
@@ -46,36 +60,41 @@ public final class IntentResult {
   }
 
   /**
-   * @return raw content of barcode
-   */
+ * @return  raw content of barcode
+ * @uml.property  name="contents"
+ */
   public String getContents() {
     return contents;
   }
 
   /**
-   * @return name of format, like "QR_CODE", "UPC_A". See {@code BarcodeFormat} for more format names.
-   */
+ * @return  name of format, like "QR_CODE", "UPC_A". See  {@code  BarcodeFormat}  for more format names.
+ * @uml.property  name="formatName"
+ */
   public String getFormatName() {
     return formatName;
   }
 
   /**
-   * @return raw bytes of the barcode content, if applicable, or null otherwise
-   */
+ * @return  raw bytes of the barcode content, if applicable, or null otherwise
+ * @uml.property  name="rawBytes"
+ */
   public byte[] getRawBytes() {
     return rawBytes;
   }
 
   /**
-   * @return rotation of the image, in degrees, which resulted in a successful scan. May be null.
-   */
+ * @return  rotation of the image, in degrees, which resulted in a successful scan. May be null.
+ * @uml.property  name="orientation"
+ */
   public Integer getOrientation() {
     return orientation;
   }
 
   /**
-   * @return name of the error correction level used in the barcode, if applicable
-   */
+ * @return  name of the error correction level used in the barcode, if applicable
+ * @uml.property  name="errorCorrectionLevel"
+ */
   public String getErrorCorrectionLevel() {
     return errorCorrectionLevel;
   }

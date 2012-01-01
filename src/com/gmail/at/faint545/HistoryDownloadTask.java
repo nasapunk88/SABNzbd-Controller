@@ -24,7 +24,8 @@ import android.os.AsyncTask;
 public class HistoryDownloadTask extends AsyncTask<Void, Void, String> {
 	private ProgressDialog progressDialog;
 	private Context mContext;
-	private String url,auth_api;
+	private String url;
+	private String auth_api;
 	private PullToRefreshListView mPtrView;
 	
 	public interface HistoryDownloadTaskListener {

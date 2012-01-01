@@ -1,5 +1,11 @@
 package com.gmail.at.faint545;
 public class StringUtils {
+	
+	/*
+	 * Perform some unit normalization. This function is used to 
+	 * convert a unit (i.e: megabytes) up, down, or neither depending
+	 * on the size.
+	 */
 	public static String normalizeSize(String size, String unit) {
 		double convertSize = Double.parseDouble(size);
 		

@@ -7,7 +7,6 @@ import org.json.JSONObject;
 
 import android.app.Activity;
 import android.content.Context;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -48,7 +47,6 @@ public class RemoteQueueAdapter extends ArrayAdapter<JSONObject> {
 			ViewHolder viewHolder = (ViewHolder) convertView.getTag();
 			try {
 				String statusText = job.getString(SabnzbdConstants.STATUS);
-				Log.d("WTF",job.toString());
 				String mbLeft = StringUtils.normalizeSize(job.getString(SabnzbdConstants.MBLEFT), "m");
 				jobProgress.append(mbLeft).append(" left");
 				
@@ -74,7 +72,9 @@ public class RemoteQueueAdapter extends ArrayAdapter<JSONObject> {
 	}
 	
 	private static class ViewHolder {
-		TextView filename, progress, status;
+		TextView filename;
+		TextView progress;
+		TextView status;
 		View statusIndicator;
 	}
 }

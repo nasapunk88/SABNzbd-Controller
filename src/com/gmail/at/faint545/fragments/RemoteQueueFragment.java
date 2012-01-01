@@ -19,6 +19,7 @@ import android.support.v4.view.Menu;
 import android.support.v4.view.MenuItem;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.ListView;
@@ -39,7 +40,7 @@ public class RemoteQueueFragment extends ListFragment implements QueueActionTask
 	private ArrayList<JSONObject> mJobs = new ArrayList<JSONObject>();
 	private ArrayList<Integer> mSelectedPositions = new ArrayList<Integer>();
 	private PullToRefreshListView mPtrView;
-	private RemoteQueueListener mListener;	
+	private RemoteQueueListener mListener;
 	
 	public final static int DELETE = 0x321;
 	public final static int PAUSE = DELETE >> 1;
@@ -195,9 +196,22 @@ public class RemoteQueueFragment extends ListFragment implements QueueActionTask
 				e.printStackTrace();
 			}
 		}
+		attachRefreshListener();
 		if(mAdapter != null) {
 			mAdapter.notifyDataSetChanged();
 		}	
+	}
+
+	private void attachRefreshListener() {
+		View refresh = getView().findViewById(R.id.queue_emptystub_refresh_image);
+		if(refresh != null) {
+			refresh.setOnClickListener(new OnClickListener() {				
+				@Override
+				public void onClick(View v) {
+					mListener.onRefreshQueue(null);
+				}
+			});
+		}
 	}
 
 	private void populateFooterView(JSONObject object) throws JSONException {
@@ -250,7 +264,7 @@ public class RemoteQueueFragment extends ListFragment implements QueueActionTask
 			public void onClick(DialogInterface dialog, int which) {}
 		});			
 		return builder.create();
-	}		
+	}
 
 	@Override
 	public void onSpeedLimitFinished(String result) {}		

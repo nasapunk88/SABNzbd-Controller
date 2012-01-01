@@ -12,7 +12,7 @@
     <string name="save_remote_button_text">Save</string>
     <string name="add_remote_button_text">Add Remote</string>
     <string name="qr_button_text">QR</string>
-    <string name="empty_remote_queue">No downloads in the queue!</string>
+    <string name="empty_remote_queue">Your queue is empty. Start downloading!</string>
     <string name="empty_remote_history">Your history is empty!</string>
     <string name="queue_tab_title">QUEUE</string>
     <string name="history_tab_title">HISTORY</string>

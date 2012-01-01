@@ -45,6 +45,7 @@ public class RemoteFragmentAdapter extends ArrayAdapter<Remote> {
 	}
 	
 	private static class ViewHolder {
-		private TextView name,host;
+		private TextView name;
+		private TextView host;
 	}
 }

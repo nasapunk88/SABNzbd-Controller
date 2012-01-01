@@ -5,11 +5,27 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
+/**
+ * @author  alex
+ */
 public class RemoteDatabase {
-	private static final String TABLE = "remote", _ID = "_id", NAME = "name", ADDR = "address", PORT = "port", API_KEY = "api_key";
-	public static final int ID_INDEX = 0, NAME_INDEX = 1, ADDR_INDEX = 2, PORT_INDEX = 3, API_KEY_INDEX = 4;
+	private static final String TABLE = "remote";
+	private static final String _ID = "_id";
+	private static final String NAME = "name";
+	private static final String ADDR = "address";
+	private static final String PORT = "port";
+	private static final String API_KEY = "api_key";
+	public static final int ID_INDEX = 0;
+	public static final int NAME_INDEX = 1;
+	public static final int ADDR_INDEX = 2;
+	public static final int PORT_INDEX = 3;
+	public static final int API_KEY_INDEX = 4;
 	
 	private Context mContext;
+	/**
+	 * @uml.property  name="dbHelper"
+	 * @uml.associationEnd  
+	 */
 	private DatabaseOpenHelper dbHelper;
 	private SQLiteDatabase database;
 	

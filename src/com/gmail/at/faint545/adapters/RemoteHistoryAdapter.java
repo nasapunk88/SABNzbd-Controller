@@ -59,7 +59,8 @@ public class RemoteHistoryAdapter extends ArrayAdapter<JSONObject> {
 	}
 	
 	private static class ViewHolder {
-		private TextView name,status;
+		private TextView name;
+		private TextView status;
 		private CheckBox isChecked;
 	}
 }

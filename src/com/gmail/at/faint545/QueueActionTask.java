@@ -26,7 +26,8 @@ import android.support.v4.app.Fragment;
 
 public class QueueActionTask extends AsyncTask<String, Void, String> {
 	private ProgressDialog progressDialog;
-	private String url,api;
+	private String url;
+	private String api;
 	private int request;
 	private Fragment fragment;
 	

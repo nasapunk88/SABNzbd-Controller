@@ -11,6 +11,7 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
+import android.util.Log;
 import android.view.View;
 import android.widget.TabHost;
 import android.widget.TabHost.OnTabChangeListener;
@@ -37,7 +38,8 @@ public class RemoteDetailsActivity extends FragmentActivity implements DataDownl
 	private TabsAdapter mTabsAdapter;
 	private Remote mRemote;
 	private AlertDialog errorDialog;
-	private final static int QUEUE_INDEX = 0, HISTORY_INDEX = 1;
+	private final static int QUEUE_INDEX = 0;
+	private final static int HISTORY_INDEX = 1;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
