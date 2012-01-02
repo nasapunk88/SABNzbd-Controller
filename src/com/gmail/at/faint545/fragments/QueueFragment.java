@@ -18,6 +18,7 @@ import android.support.v4.app.ListFragment;
 import android.support.v4.app.SupportActivity;
 import android.support.v4.view.Menu;
 import android.support.v4.view.MenuItem;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -32,8 +33,8 @@ import com.gmail.at.faint545.Remote;
 import com.gmail.at.faint545.SabnzbdConstants;
 import com.gmail.at.faint545.adapters.RemoteQueueAdapter;
 import com.gmail.at.faint545.tasks.QueueActionTask;
-import com.gmail.at.faint545.tasks.QueueDownloadTask;
 import com.gmail.at.faint545.tasks.QueueActionTask.QueueActionTaskListener;
+import com.gmail.at.faint545.tasks.QueueDownloadTask;
 import com.gmail.at.faint545.tasks.QueueDownloadTask.QueueDownloadTaskListener;
 import com.handmark.pulltorefresh.library.PullToRefreshBase.OnRefreshListener;
 import com.handmark.pulltorefresh.library.PullToRefreshListView;
@@ -171,14 +172,21 @@ public class QueueFragment extends ListFragment implements QueueActionTaskListen
 		checkbox.toggle(); // Toggle the check box
 		
 		// Add or remove the current position from our list of selected positions
-		if(checkbox.isChecked()) {
-			mSelectedPositions.add(position);
-			mSelectedPositions.trimToSize();
+		try {
+			if(checkbox.isChecked()) {
+				mJobs.get(position).put("checked", true);
+				mSelectedPositions.add(position);
+				mSelectedPositions.trimToSize();
+			}
+			else {
+				mJobs.get(position).put("checked", false);
+				mSelectedPositions.remove((Object) position);
+				mSelectedPositions.trimToSize();
+			}
 		}
-		else {
-			mSelectedPositions.remove((Object) position);
-			mSelectedPositions.trimToSize();
-		}		
+		catch(JSONException e) {
+			e.printStackTrace();
+		}
 		super.onListItemClick(l, v, position, id);
 	}
 
@@ -262,7 +270,7 @@ public class QueueFragment extends ListFragment implements QueueActionTaskListen
 	}
 
 	@Override
-	public void onQueueDownloadFinished(String result) {
+	public void onQueueDownloadFinished(String result) {		
 		if(result.equals(ClientProtocolException.class.getName()) || result.equals(IOException.class.getName())) {
 			mFragmentListener.onConnectionError();
 		}
@@ -283,7 +291,7 @@ public class QueueFragment extends ListFragment implements QueueActionTaskListen
 				loadingStub.setVisibility(View.GONE); // Hide progressbar
 			} 
 			catch (JSONException e) {
-				e.printStackTrace();
+				mFragmentListener.onConnectionError();
 			}
 		}
 	}

@@ -45,30 +45,37 @@ public class RemoteQueueAdapter extends ArrayAdapter<JSONObject> {
 					
 		JSONObject job = jobs.get(position);
 		if(job != null) {
-			StringBuilder jobProgress = new StringBuilder();
 			ViewHolder viewHolder = (ViewHolder) convertView.getTag();
-			viewHolder.checkBox.setChecked(false);
+			StringBuilder jobProgress = new StringBuilder();			
+			String statusText = null, mbLeft = null, filename = null;
+			Boolean isChecked = false;
+			
 			try {
-				String statusText = job.getString(SabnzbdConstants.STATUS);
-				String mbLeft = StringUtils.normalizeSize(job.getString(SabnzbdConstants.MBLEFT), "m");
-				jobProgress.append(mbLeft).append(" left");
-				
-				viewHolder.filename.setText(job.getString(SabnzbdConstants.FILENAME));
-				viewHolder.progress.setText(jobProgress.toString());
-				viewHolder.status.setText(statusText);
-				
-				if(statusText.equalsIgnoreCase("downloading")) {
-					viewHolder.statusIndicator.setBackgroundResource(R.color.lime_green);
-				}
-				else if(statusText.equalsIgnoreCase("paused")) {
-					viewHolder.statusIndicator.setBackgroundResource(R.color.light_red);
-				}
-				else if(statusText.equalsIgnoreCase("queued")) {
-					viewHolder.statusIndicator.setBackgroundResource(R.color.banana_yellow);
-				}				
-			} 
+				mbLeft = StringUtils.normalizeSize(job.getString(SabnzbdConstants.MBLEFT), "m");
+				statusText = job.getString(SabnzbdConstants.STATUS);
+				isChecked = job.getBoolean("checked");
+				filename = job.getString(SabnzbdConstants.FILENAME);
+			}
 			catch (JSONException e) {
-				e.printStackTrace();
+				// Do nothing.
+			}
+			
+			jobProgress.append(mbLeft).append(" left");
+			jobProgress.toString();
+			
+			viewHolder.checkBox.setChecked(isChecked);
+			viewHolder.filename.setText(filename);
+			viewHolder.progress.setText(mbLeft);
+			viewHolder.status.setText(statusText);
+			
+			if(statusText.equalsIgnoreCase("downloading")) {
+				viewHolder.statusIndicator.setBackgroundResource(R.color.lime_green);
+			}
+			else if(statusText.equalsIgnoreCase("paused")) {
+				viewHolder.statusIndicator.setBackgroundResource(R.color.light_red);
+			}
+			else if(statusText.equalsIgnoreCase("queued")) {
+				viewHolder.statusIndicator.setBackgroundResource(R.color.banana_yellow);
 			}
 		}
 		return convertView;

@@ -167,13 +167,20 @@ public class HistoryFragment extends ListFragment implements HistoryActionTaskLi
 		checkbox.toggle(); // Toggle the check box
 		
 		/* Add or remove the current position from our list of selected positions */
-		if(checkbox.isChecked()) {
-			mSelectedPositions.add(position);
-			mSelectedPositions.trimToSize();
+		try {
+			if(checkbox.isChecked()) {
+				mOldJobs.get(position).put("checked", true);
+				mSelectedPositions.add(position);
+				mSelectedPositions.trimToSize();
+			}
+			else {
+				mOldJobs.get(position).put("checked", false);
+				mSelectedPositions.remove((Object) position);
+				mSelectedPositions.trimToSize();
+			}
 		}
-		else {
-			mSelectedPositions.remove((Object) position);
-			mSelectedPositions.trimToSize();
+		catch (JSONException e) {
+			e.printStackTrace();
 		}
 		super.onListItemClick(l, v, position, id);
 	}	

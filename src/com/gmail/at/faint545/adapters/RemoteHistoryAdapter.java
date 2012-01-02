@@ -43,17 +43,21 @@ public class RemoteHistoryAdapter extends ArrayAdapter<JSONObject> {
 		JSONObject oldJob = oldJobs.get(position);
 		if(oldJob != null) {
 			ViewHolder viewHolder = (ViewHolder) convertView.getTag();
+			String jobStatus = null, jobName = null;
+			Boolean isChecked = false;
+			
 			try {
-				String jobStatus = oldJob.getString(SabnzbdConstants.STATUS);
-				String jobName = oldJob.getString(SabnzbdConstants.NAME);
-				
-				viewHolder.name.setText(jobName);
-				viewHolder.status.setText(jobStatus);
-				viewHolder.isChecked.setChecked(false);
-			} 
+				jobStatus = oldJob.getString(SabnzbdConstants.STATUS);
+				jobName = oldJob.getString(SabnzbdConstants.NAME);
+				isChecked = oldJob.getBoolean("checked");
+			}
 			catch (JSONException e) {
-				e.printStackTrace();
-			}		
+				// Do nothing
+			}	
+			
+			viewHolder.name.setText(jobName);
+			viewHolder.status.setText(jobStatus);
+			viewHolder.isChecked.setChecked(isChecked);
 		}
 		return convertView;
 	}

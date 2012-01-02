@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<selector xmlns:android="http://schemas.android.com/apk/res/android" >
-    <!-- State when pressed -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_pressed="true">
         <shape android:shape="rectangle">
-            <gradient android:startColor="#fee50b" android:endColor="#cfba00" android:angle="-90"/>
+            <gradient android:startColor="#fee50b" android:endColor="#ddc600" android:angle="-90"/>
         </shape>
-    </item>
+    </item>    
 </selector>
