@@ -2,17 +2,26 @@ package com.gmail.at.faint545.fragments;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.TimeZone;
 
 import org.apache.http.client.ClientProtocolException;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.app.AlarmManager;
 import android.app.AlertDialog;
+import android.app.PendingIntent;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.os.Messenger;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.SupportActivity;
 import android.support.v4.view.Menu;
@@ -30,6 +39,7 @@ import com.gmail.at.faint545.R;
 import com.gmail.at.faint545.Remote;
 import com.gmail.at.faint545.SabnzbdConstants;
 import com.gmail.at.faint545.adapters.RemoteQueueAdapter;
+import com.gmail.at.faint545.services.AlarmReciever;
 import com.gmail.at.faint545.tasks.QueueActionTask;
 import com.gmail.at.faint545.tasks.QueueActionTask.QueueActionTaskListener;
 import com.gmail.at.faint545.tasks.QueueDownloadTask;
@@ -44,10 +54,37 @@ public class QueueFragment extends ListFragment implements QueueActionTaskListen
 	private PullToRefreshListView mPtrView;
 	private ViewStub loadingStub;
 	private QueueFragmentListener mFragmentListener;
+	private Calendar updateTime;
 	
 	public final static int DELETE = 0x321;
 	public final static int PAUSE = DELETE >> 1;
 	public final static int RESUME = PAUSE >> 1;
+	
+	private Handler handler = new Handler(){
+
+		@Override
+		public void handleMessage(Message msg) {
+			String results = msg.getData().getString("results");
+			try {
+				JSONObject object = new JSONObject(results).getJSONObject(SabnzbdConstants.MODE_QUEUE);				
+				populateFooterView(object);
+				JSONArray array = object.getJSONArray(SabnzbdConstants.SLOTS);
+				
+				mJobs.clear();
+				for(int x = 0; x < array.length(); x++) {
+					mJobs.add(array.getJSONObject(x));
+				}
+				
+				if(mAdapter != null) {
+					mAdapter.notifyDataSetChanged();
+				}
+			}
+			catch (JSONException e) {
+				e.printStackTrace();
+			}
+			super.handleMessage(msg);
+		}		
+	};
 	
 	public interface QueueFragmentListener {
 		public void onConnectionError();
@@ -85,7 +122,7 @@ public class QueueFragment extends ListFragment implements QueueActionTaskListen
 	}
 		
 	@Override
-	public void onActivityCreated(Bundle savedInstanceState) {
+	public void onActivityCreated(Bundle savedInstanceState) {		
 		loadingStub.setVisibility(View.VISIBLE); // Make progress bar visible
 		downloadQueue(null);
 		setupListView();
@@ -288,10 +325,29 @@ public class QueueFragment extends ListFragment implements QueueActionTaskListen
 				}
 				
 				loadingStub.setVisibility(View.GONE); // Hide progressbar
+				//setRecurringAlarm();
 			} 
 			catch (JSONException e) {
 				mFragmentListener.onConnectionError();
 			}
+		}
+	}
+	
+	private void setRecurringAlarm() {
+		if(updateTime == null) {
+			updateTime = Calendar.getInstance();
+	    updateTime.setTimeZone(TimeZone.getTimeZone("GMT"));
+	    updateTime.set(Calendar.MINUTE, 1);
+	    
+			Intent downloader = new Intent(getActivity(), AlarmReciever.class);
+			downloader.putExtra("url", getRemote().buildURL());
+			downloader.putExtra("api", getRemote().getApiKey());
+			downloader.putExtra("messenger", new Messenger(handler));
+			
+			PendingIntent recurringDownload = PendingIntent.getBroadcast(getActivity(),0, downloader, PendingIntent.FLAG_CANCEL_CURRENT);
+			
+			AlarmManager alarms = (AlarmManager) getActivity().getSystemService(Context.ALARM_SERVICE); 
+			alarms.setInexactRepeating(AlarmManager.RTC_WAKEUP, updateTime.getTimeInMillis(),AlarmManager.INTERVAL_FIFTEEN_MINUTES, recurringDownload);
 		}
 	}
 }
