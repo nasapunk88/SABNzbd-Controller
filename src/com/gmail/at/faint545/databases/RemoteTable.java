@@ -9,7 +9,8 @@ public class RemoteTable {
 											 "name TEXT NOT NULL," + // Name
 											 "address TEXT NOT NULL," + // Address
 											 "port TEXT NOT NULL," + // Port
-											 "api_key TEXT NOT NULL);"; // SABNzbd API key
+											 "api_key TEXT NOT NULL," + // SABNzbd API key
+											 "refresh TEXT);"; // Refresh interval
 	
 	public static void onCreate(SQLiteDatabase database) {
 		database.execSQL(CREATE_STATEMENT);

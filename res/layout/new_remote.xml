@@ -90,6 +90,52 @@
 		            android:textColor="@color/black"
 		            android:onClick="launchQrScanner"/>
         </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/autorefresh_interval"
+            android:textAppearance="@android:style/TextAppearance.Medium"
+            android:textColor="@color/black"/>
+        
+        <RadioGroup
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:id="@+id/new_remote_refresh_radiogroup">
+            <RadioButton
+                android:id="@+id/new_remote_refresh_off"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/black"
+                android:text="Off"
+                android:layout_weight="1.0"/>
+            
+            <RadioButton
+                android:id="@+id/new_remote_refresh_fifteen"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:textColor="@color/black"
+                android:text="15 Minutes"
+                android:layout_weight="1.0"/>
+            
+            <RadioButton
+                android:id="@+id/new_remote_refresh_half_hour"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/black"
+                android:text="30 Minutes"
+                android:layout_weight="1.0"/>            
+
+            <RadioButton
+                android:id="@+id/new_remote_refresh_hour"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/black"
+                android:text="1 Hour"
+                android:layout_weight="1.0"/>            
+        </RadioGroup>
         
         <View
             android:layout_width="fill_parent"

@@ -1,5 +1,6 @@
 package com.gmail.at.faint545.fragments;
 
+import android.app.AlarmManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -12,6 +13,8 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RadioGroup;
+import android.widget.RadioGroup.OnCheckedChangeListener;
 import android.widget.Toast;
 
 import com.gmail.at.faint545.R;
@@ -25,6 +28,12 @@ public class NewRemoteFragment extends Fragment {
 	private EditText apiKeyEditText;
 	private Button saveRemote;
 	private NewRemoteListener remoteListener;
+	private RadioGroup refreshInterval;
+	
+	private static final int REFRESH_OFF = R.id.new_remote_refresh_off;
+	private static final int REFRESH_FIFTEEN = R.id.new_remote_refresh_fifteen;
+	private static final int REFRESH_HOUR = R.id.new_remote_refresh_hour;
+	private static final int REFRESH_HALF_HOUR = R.id.new_remote_refresh_half_hour;
 
 	public interface NewRemoteListener {
 		public void onRemoteSaved();
@@ -46,12 +55,20 @@ public class NewRemoteFragment extends Fragment {
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-		return inflater.inflate(R.layout.new_remote, null);
+		View view = inflater.inflate(R.layout.new_remote, null);
+		nickEditText = (EditText) view.findViewById(R.id.new_remote_layout_name_edit_text);
+		addressEditText = (EditText) view.findViewById(R.id.new_remote_layout_address_edit_text);
+		portEditText = (EditText) view.findViewById(R.id.new_remote_layout_port_edit_text);
+		apiKeyEditText = (EditText) view.findViewById(R.id.new_remote_layout_apikey_edit_text);
+		saveRemote = (Button) view.findViewById(R.id.new_remote_save_button);
+		refreshInterval = (RadioGroup) view.findViewById(R.id.new_remote_refresh_radiogroup);
+
+		saveRemote.setEnabled(false); // Disable button by default
+		return view;
 	}
 
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
-		setupViews();
 		if(getRemote() != null) populateViews();
 		initListeners();
 		super.onActivityCreated(savedInstanceState);
@@ -61,7 +78,7 @@ public class NewRemoteFragment extends Fragment {
 		nickEditText.setText(getRemote().getName());
 		addressEditText.setText(getRemote().getAddress());
 		portEditText.setText(getRemote().getPort());
-		apiKeyEditText.setText(getRemote().getApiKey());	
+		apiKeyEditText.setText(getRemote().getApiKey());
 	}
 
 	private void initListeners() {
@@ -72,7 +89,7 @@ public class NewRemoteFragment extends Fragment {
 			public void beforeTextChanged(CharSequence s, int start, int count,int after) {}			
 			@Override
 			public void afterTextChanged(Editable s) {
-				if(s.length() > 0 && addressEditText.getText().length() > 0 && portEditText.getText().length() > 0 && apiKeyEditText.getText().length() > 0) {
+				if(validateTextFields()) {
 					saveRemote.setEnabled(true);
 				}
 				else {
@@ -88,7 +105,7 @@ public class NewRemoteFragment extends Fragment {
 			public void beforeTextChanged(CharSequence s, int start, int count,int after) {}			
 			@Override
 			public void afterTextChanged(Editable s) {
-				if(s.length() > 0 && nickEditText.getText().length() > 0 && portEditText.getText().length() > 0 && apiKeyEditText.getText().length() > 0) {
+				if(validateTextFields()) {
 					saveRemote.setEnabled(true);
 				}
 				else {
@@ -106,7 +123,7 @@ public class NewRemoteFragment extends Fragment {
 
 			@Override
 			public void afterTextChanged(Editable s) {
-				if(s.length() > 0 && nickEditText.getText().length() > 0 && addressEditText.getText().length() > 0 && apiKeyEditText.getText().length() > 0) {
+				if(validateTextFields()) {
 					saveRemote.setEnabled(true);
 				}
 				else {
@@ -124,7 +141,20 @@ public class NewRemoteFragment extends Fragment {
 
 			@Override
 			public void afterTextChanged(Editable s) {
-				if(s.length() > 0 && nickEditText.getText().length() > 0 && addressEditText.getText().length() > 0 && portEditText.getText().length() > 0) {
+				if(validateTextFields()) {
+					saveRemote.setEnabled(true);
+				}
+				else {
+					saveRemote.setEnabled(false);
+				}
+			}
+		});
+		
+		refreshInterval.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+			
+			@Override
+			public void onCheckedChanged(RadioGroup group, int checkedId) {
+				if(validateTextFields()) {
 					saveRemote.setEnabled(true);
 				}
 				else {
@@ -136,12 +166,37 @@ public class NewRemoteFragment extends Fragment {
 		saveRemote.setOnClickListener(new OnClickListener() {			
 			@Override
 			public void onClick(View v) {
-				saveToDatabase(nickEditText.getText().toString(), addressEditText.getText().toString(), portEditText.getText().toString(), apiKeyEditText.getText().toString());
+				long refresh = 0;
+				switch(refreshInterval.getCheckedRadioButtonId()) {
+					case REFRESH_FIFTEEN:
+						refresh = AlarmManager.INTERVAL_FIFTEEN_MINUTES;
+					break;
+					case REFRESH_HALF_HOUR:
+						refresh = AlarmManager.INTERVAL_HALF_HOUR;
+					break;
+					case REFRESH_HOUR:
+						refresh = AlarmManager.INTERVAL_HOUR;
+					break;
+					case REFRESH_OFF:
+						refresh = -1;
+					break;
+					default: 
+						refresh = -1;
+					break;
+				}
+				saveToDatabase(nickEditText.getText().toString(), addressEditText.getText().toString(), portEditText.getText().toString(), apiKeyEditText.getText().toString(),refresh);
 			}
 		});
 	}
+	
+	private boolean validateTextFields() {
+		if(nickEditText.length() > 0 && addressEditText.length() > 0 && portEditText.length() > 0 && apiKeyEditText.length() > 0) {
+			return true;
+		}
+		else return false;
+	}
 
-	private void saveToDatabase(String nickname, String address, String port, String apiKey) {
+	private void saveToDatabase(String nickname, String address, String port, String apiKey, long refreshInterval) {
 		new AsyncTask<String, Void, Long>(){
 			RemoteDatabase database;
 			@Override
@@ -152,10 +207,10 @@ public class NewRemoteFragment extends Fragment {
 
 			@Override
 			protected Long doInBackground(String... params) {
-				String nickname = params[0], address = params[1],
-						port = params[2], apiKey = params[3];
+				String nickname = params[0], address = params[1],port = params[2], apiKey = params[3], refreshInterval = params[4];
 				database.open();
-				long result = (getRemote() != null) ? database.update(Integer.parseInt(getRemote().getId()), nickname, address, port, apiKey) : database.insert(nickname, address, port, apiKey);
+				long result = (getRemote() != null) ? database.update(Integer.parseInt(getRemote().getId()), nickname, address, port, apiKey,refreshInterval) 
+																						: database.insert(nickname,address,port,apiKey,refreshInterval);
 				database.close();
 				return result;
 			}
@@ -172,17 +227,7 @@ public class NewRemoteFragment extends Fragment {
 				super.onPostExecute(result);
 			}
 
-		}.execute(nickname,address,port,apiKey);
-	}
-
-	private void setupViews() {
-		nickEditText = (EditText) getView().findViewById(R.id.new_remote_layout_name_edit_text);
-		addressEditText = (EditText) getView().findViewById(R.id.new_remote_layout_address_edit_text);
-		portEditText = (EditText) getView().findViewById(R.id.new_remote_layout_port_edit_text);
-		apiKeyEditText = (EditText) getView().findViewById(R.id.new_remote_layout_apikey_edit_text);
-		saveRemote = (Button) getView().findViewById(R.id.new_remote_save_button);
-
-		saveRemote.setEnabled(false); // Disable button by default
+		}.execute(nickname,address,port,apiKey,String.valueOf(refreshInterval));
 	}
 
 	public void populateApiKey(String apiKey) {

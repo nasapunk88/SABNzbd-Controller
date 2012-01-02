@@ -55,11 +55,17 @@ public class QueueFragment extends ListFragment implements QueueActionTaskListen
 	private ViewStub loadingStub;
 	private QueueFragmentListener mFragmentListener;
 	private Calendar updateTime;
+	private TextView timeLeft, globalSpeed;
 	
 	public final static int DELETE = 0x321;
 	public final static int PAUSE = DELETE >> 1;
 	public final static int RESUME = PAUSE >> 1;
 	
+	/*
+	 * A handler to handle an incoming message. More specifically,
+	 * this will trigger when the queue download service completed
+	 * and the message will be the new queue data.
+	 */
 	private Handler handler = new Handler(){
 
 		@Override
@@ -67,7 +73,7 @@ public class QueueFragment extends ListFragment implements QueueActionTaskListen
 			String results = msg.getData().getString("results");
 			try {
 				JSONObject object = new JSONObject(results).getJSONObject(SabnzbdConstants.MODE_QUEUE);				
-				populateFooterView(object);
+				updateFooterView(object);
 				JSONArray array = object.getJSONArray(SabnzbdConstants.SLOTS);
 				
 				mJobs.clear();
@@ -77,6 +83,10 @@ public class QueueFragment extends ListFragment implements QueueActionTaskListen
 				
 				if(mAdapter != null) {
 					mAdapter.notifyDataSetChanged();
+				}
+				
+				if(loadingStub.getVisibility() == View.VISIBLE) {
+					loadingStub.setVisibility(View.GONE);
 				}
 			}
 			catch (JSONException e) {
@@ -124,7 +134,7 @@ public class QueueFragment extends ListFragment implements QueueActionTaskListen
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {		
 		loadingStub.setVisibility(View.VISIBLE); // Make progress bar visible
-		downloadQueue(null);
+		setRecurringAlarm();
 		setupListView();
 		setupListAdapter();
 		initListeners();
@@ -140,8 +150,7 @@ public class QueueFragment extends ListFragment implements QueueActionTaskListen
 	}
 	
 	private void downloadQueue(Object viewToUse) {
-		mJobs.clear();
-		new QueueDownloadTask(this, getRemote().buildURL(),getRemote().getApiKey(),viewToUse).execute();
+		new QueueDownloadTask(this, getRemote().buildURL(),getRemote().getApiKey(),viewToUse).execute();		
 	}	
 	
 	@Override
@@ -246,12 +255,17 @@ public class QueueFragment extends ListFragment implements QueueActionTaskListen
 		setListAdapter(mAdapter);
 	}
 
-	private void populateFooterView(JSONObject object) throws JSONException {
-		TextView timeleft = (TextView) getView().findViewById(R.id.remote_queue_timeleft);
-		TextView speed = (TextView) getView().findViewById(R.id.remote_queue_speed);
+	private void updateFooterView(JSONObject object) throws JSONException {
+		if(timeLeft == null) {
+			timeLeft = (TextView) getView().findViewById(R.id.remote_queue_timeleft);
+		}
 		
-		speed.setText(object.getString(SabnzbdConstants.SPEED));
-		timeleft.setText(object.getString(SabnzbdConstants.TIMELEFT));
+		if(globalSpeed == null) {
+			globalSpeed = (TextView) getView().findViewById(R.id.remote_queue_speed);
+		}
+		
+		globalSpeed.setText(object.getString(SabnzbdConstants.SPEED));
+		timeLeft.setText(object.getString(SabnzbdConstants.TIMELEFT));
 	}
 
 	@Override
@@ -313,9 +327,9 @@ public class QueueFragment extends ListFragment implements QueueActionTaskListen
 		else {
 			try {
 				JSONObject object = new JSONObject(result).getJSONObject(SabnzbdConstants.MODE_QUEUE);				
-				populateFooterView(object);
+				updateFooterView(object);
 				JSONArray array = object.getJSONArray(SabnzbdConstants.SLOTS);
-				
+				mJobs.clear();
 				for(int x = 0; x < array.length(); x++) {
 					mJobs.add(array.getJSONObject(x));
 				}
@@ -324,8 +338,9 @@ public class QueueFragment extends ListFragment implements QueueActionTaskListen
 					mAdapter.notifyDataSetChanged();
 				}
 				
-				loadingStub.setVisibility(View.GONE); // Hide progressbar
-				//setRecurringAlarm();
+				if(loadingStub.getVisibility() == View.VISIBLE) {
+					loadingStub.setVisibility(View.GONE); // Hide progressbar
+				}
 			} 
 			catch (JSONException e) {
 				mFragmentListener.onConnectionError();
@@ -333,8 +348,13 @@ public class QueueFragment extends ListFragment implements QueueActionTaskListen
 		}
 	}
 	
+	/*
+	 * Set a recurring alarm to trigger a service to download the latest 
+	 * queue data. If user turned off auto refresh, just download the data
+	 * and don't set an alarm.
+	 */
 	private void setRecurringAlarm() {
-		if(updateTime == null) {
+		if(getRemote().getRefreshInterval() != -1) {
 			updateTime = Calendar.getInstance();
 	    updateTime.setTimeZone(TimeZone.getTimeZone("GMT"));
 	    updateTime.set(Calendar.MINUTE, 1);
@@ -347,7 +367,10 @@ public class QueueFragment extends ListFragment implements QueueActionTaskListen
 			PendingIntent recurringDownload = PendingIntent.getBroadcast(getActivity(),0, downloader, PendingIntent.FLAG_CANCEL_CURRENT);
 			
 			AlarmManager alarms = (AlarmManager) getActivity().getSystemService(Context.ALARM_SERVICE); 
-			alarms.setInexactRepeating(AlarmManager.RTC_WAKEUP, updateTime.getTimeInMillis(),AlarmManager.INTERVAL_FIFTEEN_MINUTES, recurringDownload);
+			alarms.setInexactRepeating(AlarmManager.RTC_WAKEUP, updateTime.getTimeInMillis(),getRemote().getRefreshInterval(), recurringDownload);
+		}
+		else {
+			downloadQueue(null);
 		}
 	}
 }

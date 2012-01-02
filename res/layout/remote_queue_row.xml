@@ -24,25 +24,17 @@
 		        android:text="Sample Filename"
 		        android:textColor="@color/black"
 		        android:textAppearance="@android:style/TextAppearance.Medium"/>
+
+		    <ProgressBar
+		        android:id="@+id/remote_queue_progress_bar"
+		        style="@android:style/Widget.ProgressBar.Horizontal"
+		        android:layout_width="fill_parent"
+		        android:layout_height="wrap_content" />
     
-		    <TextView android:id="@+id/remote_queue_row_progress"
+		    <TextView android:id="@+id/remote_queue_row_status"
 		        android:layout_width="match_parent"
 		        android:layout_height="wrap_content"
-		        android:text="size left"
 		        android:textColor="@color/black"
-		        android:textAppearance="@android:style/TextAppearance.Small"/>
-		    
-        <TextView android:id="@+id/remote_queue_row_status"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Downloading"
-            android:textColor="@color/black"
-            android:textAppearance="@android:style/TextAppearance.Small"/>		    
-    </LinearLayout>
-    
-    <View
-        android:id="@+id/remote_queue_status_indicator"
-        android:layout_width="4dp"
-        android:layout_height="match_parent"/>
-    
+		        android:textAppearance="@android:style/TextAppearance.Small"/>		         		    
+    </LinearLayout>   
 </LinearLayout>

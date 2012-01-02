@@ -67,6 +67,7 @@ public class DataQueueService extends IntentService {
 			message.setData(resultsBundle);
 			
 			messenger.send(message);
+			stopSelf();
 		} 
 		catch (ClientProtocolException e) {
 			e.printStackTrace();

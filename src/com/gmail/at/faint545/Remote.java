@@ -3,103 +3,55 @@ package com.gmail.at.faint545;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-/**
- * @author  alex
- */
 public class Remote implements Parcelable {
-	/**
-	 * @uml.property  name="name"
-	 */
 	private String name;
-	/**
-	 * @uml.property  name="address"
-	 */
 	private String address;
-	/**
-	 * @uml.property  name="port"
-	 */
 	private String port;
-	/**
-	 * @uml.property  name="apiKey"
-	 */
 	private String apiKey;
-	/**
-	 * @uml.property  name="id"
-	 */
 	private String id;
+	private long refreshInterval;
 
 	public Remote(String name) {
 		this.name = name;
 	}
 	
-	/**
-	 * @param address
-	 * @return
-	 * @uml.property  name="address"
-	 */
 	public Remote setAddress(String address) {
 		this.address = address;
 		return this;
 	}
 	
-	/**
-	 * @param port
-	 * @return
-	 * @uml.property  name="port"
-	 */
 	public Remote setPort(String port) {
 		this.port = port;
 		return this;
 	}
 
-	/**
-	 * @param apiKey
-	 * @return
-	 * @uml.property  name="apiKey"
-	 */
 	public Remote setApiKey(String apiKey) {
 		this.apiKey = apiKey;
 		return this;
 	}
 	
-	/**
-	 * @param id
-	 * @return
-	 * @uml.property  name="id"
-	 */
 	public Remote setId(String id) {
 		this.id = id;
 		return this;
 	}
 	
-	/**
-	 * @return
-	 * @uml.property  name="name"
-	 */
+	public Remote setRefreshInterval(long interval) {
+		refreshInterval = interval;
+		return this;
+	}
+	
 	public String getName() {
 		return name;
 	}
 	
-	/**
-	 * @return
-	 * @uml.property  name="apiKey"
-	 */
 	public String getApiKey() {
 		return apiKey;
 	}
 	
-	/**
-	 * @return
-	 * @uml.property  name="address"
-	 */
 	public String getAddress() {
 		return address;
 	}
 	
-	/**
-	 * @return
-	 * @uml.property  name="port"
-	 */
 	public String getPort() {
 		return port;
 	}
@@ -110,12 +62,12 @@ public class Remote implements Parcelable {
 		return hostname.toString();
 	}
 	
-	/**
-	 * @return
-	 * @uml.property  name="id"
-	 */
 	public String getId() {
 		return id;
+	}
+	
+	public long getRefreshInterval() {
+		return refreshInterval;
 	}
 	
 	public String buildURL() {
@@ -158,6 +110,7 @@ public class Remote implements Parcelable {
 		dest.writeString(port);
 		dest.writeString(apiKey);
 		dest.writeString(id);
+		dest.writeLong(refreshInterval);
 	}
 	
 	/*
@@ -171,5 +124,6 @@ public class Remote implements Parcelable {
 		port = source.readString();
 		apiKey = source.readString();
 		id = source.readString();
+		refreshInterval = source.readLong();
 	}	
 }

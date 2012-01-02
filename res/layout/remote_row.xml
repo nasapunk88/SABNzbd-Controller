@@ -18,6 +18,13 @@
         android:layout_height="wrap_content"
         android:text="Sample Host"
         android:textColor="@color/black"
-        android:textAppearance="@android:style/TextAppearance.Small"/>   
+        android:textAppearance="@android:style/TextAppearance.Small"/>
+    
+    <TextView android:id="@+id/remote_layout_row_refresh"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="Refresh"
+        android:textColor="@color/black"
+        android:textAppearance="@android:style/TextAppearance.Small"/>    
     
 </LinearLayout>

@@ -27,5 +27,5 @@
     <string name="remote_queu_speed">Speed</string>
     <string name="edit">Edit</string>
     <string name="delete">Delete</string>
-
+    <string name="autorefresh_interval">Refresh Interval</string>
 </resources>

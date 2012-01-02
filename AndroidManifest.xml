@@ -15,7 +15,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".activities.DetailsActivity" android:theme="@android:style/Theme.NoTitleBar" android:configChanges="orientation"/>        
+        <activity android:name=".activities.DetailsActivity" android:theme="@android:style/Theme.NoTitleBar" android:configChanges="orientation"/>
+        <service android:name=".services.DataQueueService"></service>
+        <receiver android:name=".services.AlarmReciever"></receiver>        
     </application>
 
 </manifest>

@@ -32,6 +32,7 @@ public class RemoteFragmentAdapter extends ArrayAdapter<Remote> {
 			ViewHolder viewHolder = new ViewHolder();
 			viewHolder.name = (TextView) convertView.findViewById(R.id.remote_layout_row_name);
 			viewHolder.host = (TextView) convertView.findViewById(R.id.remote_layout_row_host);
+			viewHolder.refreshInterval = (TextView) convertView.findViewById(R.id.remote_layout_row_refresh);
 			convertView.setTag(viewHolder);
 		}
 		
@@ -40,6 +41,14 @@ public class RemoteFragmentAdapter extends ArrayAdapter<Remote> {
 			ViewHolder viewHolder = (ViewHolder) convertView.getTag();
 			viewHolder.name.setText(remote.getName());
 			viewHolder.host.setText(remote.getHost());
+			
+			if(remote.getRefreshInterval() != -1) {
+				int intervalInMinutes = (int) ((remote.getRefreshInterval()/1000)/60);
+				viewHolder.refreshInterval.setText("Auto-Refresh: " + intervalInMinutes + " minutes");
+			}
+			else {
+				viewHolder.refreshInterval.setText("Auto-Refresh: Off");
+			}
 		}
 		return convertView;
 	}
@@ -47,5 +56,6 @@ public class RemoteFragmentAdapter extends ArrayAdapter<Remote> {
 	private static class ViewHolder {
 		private TextView name;
 		private TextView host;
+		private TextView refreshInterval;
 	}
 }

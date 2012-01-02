@@ -185,7 +185,8 @@ public class RemoteFragment extends ListFragment {
 						String address = cur.getString(RemoteDatabase.ADDR_INDEX);
 						String port = cur.getString(RemoteDatabase.PORT_INDEX);
 						String apiKey = cur.getString(RemoteDatabase.API_KEY_INDEX);
-						remotes.add(new Remote(name).setAddress(address).setPort(port).setApiKey(apiKey).setId(id));
+						long interval = cur.getLong(RemoteDatabase.REFRESH_INDEX);
+						remotes.add(new Remote(name).setAddress(address).setPort(port).setApiKey(apiKey).setId(id).setRefreshInterval(interval));
 					}					
 					cur.close();
 					db.close();

@@ -6,7 +6,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class DatabaseOpenHelper extends SQLiteOpenHelper {
 	private final static String DATABASE_NAME = "sabnzbdcontroller";
-	private final static int VERSION = 1;
+	private final static int VERSION = 2;
 
 	public DatabaseOpenHelper(Context context) {
 		super(context, DATABASE_NAME, null, VERSION);
