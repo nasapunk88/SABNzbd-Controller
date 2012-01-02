@@ -76,13 +76,13 @@ public class QueueDownloadTask extends AsyncTask<Void, Void, String> {
 	@Override
 	protected void onPostExecute(String result) {
 		QueueDownloadTaskListener listener = (QueueDownloadTaskListener) mContext;
-		listener.onQueueDownloadFinished(result);
 		cleanup();
+		listener.onQueueDownloadFinished(result);		
 		super.onPostExecute(result);
 	}
 
 	private void cleanup() {
-		if(mTargetView instanceof PullToRefreshListView) {
+		if(mTargetView instanceof PullToRefreshListView) {			
 			((PullToRefreshListView) mTargetView).onRefreshComplete();
 		}
 		else if(mTargetView instanceof ProgressDialog) {

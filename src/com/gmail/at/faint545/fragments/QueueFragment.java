@@ -8,7 +8,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
@@ -18,7 +17,6 @@ import android.support.v4.app.ListFragment;
 import android.support.v4.app.SupportActivity;
 import android.support.v4.view.Menu;
 import android.support.v4.view.MenuItem;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -100,9 +98,8 @@ public class QueueFragment extends ListFragment implements QueueActionTaskListen
 		getListView().setCacheColorHint(Color.TRANSPARENT); // Optimization for ListView
 		
 		// Attach a footer view
-		LayoutInflater inflater = (LayoutInflater) getActivity().getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
-		View footer = inflater.inflate(R.layout.remote_queue_footer, null);
-		getListView().addFooterView(footer,null,false);
+		View footer = getActivity().getLayoutInflater().inflate(R.layout.remote_queue_footer, null);
+		getListView().addFooterView(footer);
 	}
 	
 	private void downloadQueue(Object viewToUse) {
@@ -168,24 +165,26 @@ public class QueueFragment extends ListFragment implements QueueActionTaskListen
 
 	@Override
 	public void onListItemClick(ListView l, View v, int position, long id) {
-		CheckBox checkbox = (CheckBox) v.findViewById(R.id.remote_queue_checkbox);
-		checkbox.toggle(); // Toggle the check box
-		
-		// Add or remove the current position from our list of selected positions
-		try {
-			if(checkbox.isChecked()) {
-				mJobs.get(position).put("checked", true);
-				mSelectedPositions.add(position);
-				mSelectedPositions.trimToSize();
+		if(position < getListView().getCount()-1) {
+			CheckBox checkbox = (CheckBox) v.findViewById(R.id.remote_queue_checkbox);
+			checkbox.toggle(); // Toggle the check box
+			
+			// Add or remove the current position from our list of selected positions
+			try {
+				if(checkbox.isChecked()) {
+					mJobs.get(position).put("checked", true);
+					mSelectedPositions.add(position);
+					mSelectedPositions.trimToSize();
+				}
+				else {
+					mJobs.get(position).put("checked", false);
+					mSelectedPositions.remove((Object) position);
+					mSelectedPositions.trimToSize();
+				}
 			}
-			else {
-				mJobs.get(position).put("checked", false);
-				mSelectedPositions.remove((Object) position);
-				mSelectedPositions.trimToSize();
+			catch(JSONException e) {
+				e.printStackTrace();
 			}
-		}
-		catch(JSONException e) {
-			e.printStackTrace();
 		}
 		super.onListItemClick(l, v, position, id);
 	}
@@ -277,7 +276,7 @@ public class QueueFragment extends ListFragment implements QueueActionTaskListen
 		else {
 			try {
 				JSONObject object = new JSONObject(result).getJSONObject(SabnzbdConstants.MODE_QUEUE);				
-				populateFooterView(object);				
+				populateFooterView(object);
 				JSONArray array = object.getJSONArray(SabnzbdConstants.SLOTS);
 				
 				for(int x = 0; x < array.length(); x++) {

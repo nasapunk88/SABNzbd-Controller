@@ -53,11 +53,11 @@ public class RemoteQueueAdapter extends ArrayAdapter<JSONObject> {
 			try {
 				mbLeft = StringUtils.normalizeSize(job.getString(SabnzbdConstants.MBLEFT), "m");
 				statusText = job.getString(SabnzbdConstants.STATUS);
-				isChecked = job.getBoolean("checked");
 				filename = job.getString(SabnzbdConstants.FILENAME);
+				isChecked = job.getBoolean("checked");				
 			}
 			catch (JSONException e) {
-				// Do nothing.
+				// Do nothing
 			}
 			
 			jobProgress.append(mbLeft).append(" left");
