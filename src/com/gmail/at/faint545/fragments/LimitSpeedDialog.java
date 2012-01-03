@@ -30,11 +30,11 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.gmail.at.faint545.tasks.QueueActionTask;
-import com.gmail.at.faint545.tasks.QueueActionTask.QueueActionTaskListener;
 import com.gmail.at.faint545.R;
 import com.gmail.at.faint545.Remote;
 import com.gmail.at.faint545.SabnzbdConstants;
+import com.gmail.at.faint545.tasks.QueueActionTask;
+import com.gmail.at.faint545.tasks.QueueActionTask.QueueActionTaskListener;
 
 public class LimitSpeedDialog extends DialogFragment implements QueueActionTaskListener {
 	private EditText valueEditText;

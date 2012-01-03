@@ -30,11 +30,11 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 
-import com.gmail.at.faint545.SabnzbdConstants;
-
 import android.app.ProgressDialog;
 import android.os.AsyncTask;
 import android.support.v4.app.Fragment;
+
+import com.gmail.at.faint545.SabnzbdConstants;
 
 public class HistoryActionTask extends AsyncTask<String, Void, String> {
 	private ProgressDialog progressDialog;
