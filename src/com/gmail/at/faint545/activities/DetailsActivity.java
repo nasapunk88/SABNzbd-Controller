@@ -1,5 +1,21 @@
+/* 
+ * Copyright 2011 Alex Fu
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 		
+ * 		http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.gmail.at.faint545.activities;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
 import android.app.AlertDialog;
@@ -58,9 +74,7 @@ public class DetailsActivity extends FragmentActivity implements QueueFragmentLi
 		mTabsAdapter.add(mTabHost.newTabSpec("history").setIndicator(historyIndicator),HistoryFragment.newInstance(mRemote),null);
 	}
 	
-	/*
-	 * A helper function to build an alert/error dialog
-	 */
+	/* A helper function to build an alert/error dialog */
 	private AlertDialog buildAlertDialog() {
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		builder.setMessage(R.string.connect_error);
@@ -85,11 +99,9 @@ public class DetailsActivity extends FragmentActivity implements QueueFragmentLi
 		}
 	}		
 
-	/*
-	 * Tabs adapter subclass
-	 */	
+	/* Tabs adapter subclass */	
 	public static class TabsAdapter extends FragmentPagerAdapter implements OnTabChangeListener, OnPageChangeListener {
-		private final Context mContext;
+		private final WeakReference<Context> mWeakContext;
 		private final TabHost mTabHost;
 		private final ViewPager mViewPager;
 		private final ArrayList<Fragment> mTabs = new ArrayList<Fragment>();
@@ -112,7 +124,7 @@ public class DetailsActivity extends FragmentActivity implements QueueFragmentLi
 		
 		public TabsAdapter(FragmentActivity activity, TabHost tabHost, ViewPager pager) {
 			super(activity.getSupportFragmentManager());
-			mContext = activity;
+			mWeakContext = new WeakReference<Context>(activity);
 			mTabHost = tabHost;
 			mViewPager = pager;
 			mTabHost.setOnTabChangedListener(this);
@@ -121,7 +133,7 @@ public class DetailsActivity extends FragmentActivity implements QueueFragmentLi
 		}
 		
 		public void add(TabHost.TabSpec tabSpec,Fragment fragment, Bundle args) {
-			tabSpec.setContent(new DummyTabFactory(mContext));
+			tabSpec.setContent(new DummyTabFactory(mWeakContext.get()));
 			
 			mTabs.add(fragment);
 			mTabHost.addTab(tabSpec);
@@ -146,7 +158,7 @@ public class DetailsActivity extends FragmentActivity implements QueueFragmentLi
 
 		@Override
 		public void onPageSelected(int position) {
-			((FragmentActivity) mContext).invalidateOptionsMenu();
+			((FragmentActivity) mWeakContext.get()).invalidateOptionsMenu();
 			mTabHost.setCurrentTab(position);
 		}
 
@@ -155,7 +167,7 @@ public class DetailsActivity extends FragmentActivity implements QueueFragmentLi
 
 		@Override
 		public void onTabChanged(String tag) {
-			((FragmentActivity) mContext).invalidateOptionsMenu();
+			((FragmentActivity) mWeakContext.get()).invalidateOptionsMenu();
 			int position = mTabHost.getCurrentTab();
 			mViewPager.setCurrentItem(position);
 		}

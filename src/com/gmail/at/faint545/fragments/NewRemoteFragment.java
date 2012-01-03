@@ -1,3 +1,18 @@
+/* 
+ * Copyright 2011 Alex Fu
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 		
+ * 		http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.gmail.at.faint545.fragments;
 
 import android.app.AlarmManager;
@@ -20,13 +35,12 @@ import android.widget.Toast;
 import com.gmail.at.faint545.R;
 import com.gmail.at.faint545.Remote;
 import com.gmail.at.faint545.databases.RemoteDatabase;
+import com.gmail.at.faint545.zxing.IntentIntegrator;
 
 public class NewRemoteFragment extends Fragment {
-	private EditText nickEditText;
-	private EditText addressEditText;
-	private EditText portEditText;
-	private EditText apiKeyEditText;
-	private Button saveRemote;
+	private EditText nickEditText, addressEditText;
+	private EditText portEditText, apiKeyEditText;
+	private Button saveRemote, qrButton;
 	private NewRemoteListener remoteListener;
 	private RadioGroup refreshInterval;
 	
@@ -39,6 +53,7 @@ public class NewRemoteFragment extends Fragment {
 		public void onRemoteSaved();
 	}
 
+	/* Default constructor */
 	public static NewRemoteFragment newInstance(Remote remote) {
 		Bundle args = new Bundle();
 		args.putParcelable("remote", remote);
@@ -53,6 +68,7 @@ public class NewRemoteFragment extends Fragment {
 		super.onAttach(activity);
 	}
 
+	/* Inflate custom view and initialize view objects */
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		View view = inflater.inflate(R.layout.new_remote, null);
@@ -62,8 +78,7 @@ public class NewRemoteFragment extends Fragment {
 		apiKeyEditText = (EditText) view.findViewById(R.id.new_remote_layout_apikey_edit_text);
 		saveRemote = (Button) view.findViewById(R.id.new_remote_save_button);
 		refreshInterval = (RadioGroup) view.findViewById(R.id.new_remote_refresh_radiogroup);
-
-		saveRemote.setEnabled(false); // Disable button by default
+		qrButton = (Button) view.findViewById(R.id.new_remote_layout_qr_button);
 		return view;
 	}
 
@@ -81,6 +96,7 @@ public class NewRemoteFragment extends Fragment {
 		apiKeyEditText.setText(getRemote().getApiKey());
 	}
 
+	/* Initialize some listeners for view objects */
 	private void initListeners() {
 		nickEditText.addTextChangedListener(new TextWatcher() {			
 			@Override
@@ -162,6 +178,15 @@ public class NewRemoteFragment extends Fragment {
 				}
 			}
 		});
+		
+		qrButton.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				IntentIntegrator integrator = new IntentIntegrator(getActivity());
+				integrator.initiateScan();
+			}
+		});
 
 		saveRemote.setOnClickListener(new OnClickListener() {			
 			@Override
@@ -189,6 +214,7 @@ public class NewRemoteFragment extends Fragment {
 		});
 	}
 	
+	/* Return true if all text fields are filled, false otherwise */
 	private boolean validateTextFields() {
 		if(nickEditText.length() > 0 && addressEditText.length() > 0 && portEditText.length() > 0 && apiKeyEditText.length() > 0) {
 			return true;
@@ -196,6 +222,7 @@ public class NewRemoteFragment extends Fragment {
 		else return false;
 	}
 
+	/* Save this profile to the local database. Run as an AsyncTask */
 	private void saveToDatabase(String nickname, String address, String port, String apiKey, long refreshInterval) {
 		new AsyncTask<String, Void, Long>(){
 			RemoteDatabase database;
@@ -230,6 +257,10 @@ public class NewRemoteFragment extends Fragment {
 		}.execute(nickname,address,port,apiKey,String.valueOf(refreshInterval));
 	}
 
+	/* 
+	 * This method is used to populate the API key field 
+	 * when a QR scan completes 
+	 */
 	public void populateApiKey(String apiKey) {
 		apiKeyEditText.setText(apiKey);
 	}
