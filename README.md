@@ -1,7 +1,6 @@
 SABNzbd Controller
 ==================
-
-Description: A controller for your SABNzbd download manager.
+A native Android application to control your SABNzbd download manager.
 
 Note To Developers
 ==================
