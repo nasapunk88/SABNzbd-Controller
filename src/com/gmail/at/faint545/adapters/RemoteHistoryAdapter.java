@@ -22,6 +22,7 @@ import org.json.JSONObject;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -69,6 +70,13 @@ public class RemoteHistoryAdapter extends ArrayAdapter<JSONObject> {
 			catch (JSONException e) {
 				// Do nothing
 			}	
+			
+			if(jobStatus.equals(SabnzbdConstants.STATUS_COMPLETED)) {
+				convertView.setBackgroundResource(R.color.light_green);
+			}
+			else if(jobStatus.equals(SabnzbdConstants.STATUS_FAILED)) {
+				convertView.setBackgroundResource(R.color.light_red);
+			}
 			
 			viewHolder.name.setText(jobName);
 			viewHolder.status.setText(jobStatus);

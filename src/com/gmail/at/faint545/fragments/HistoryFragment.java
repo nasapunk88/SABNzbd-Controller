@@ -62,7 +62,7 @@ public class HistoryFragment extends ListFragment implements HistoryActionTaskLi
 	public final static int DELETE = 0x123;
 	
 	public interface HistoryFragmentListener {
-		public void onConnectionError();
+		public void onConnectionError(String result);
 	}
 	
 	/* Default constructor */
@@ -253,7 +253,7 @@ public class HistoryFragment extends ListFragment implements HistoryActionTaskLi
 	@Override
 	public void onHistoryDownloadFinished(String result) {
 		if(result.equals(ClientProtocolException.class.getName()) || result.equals(IOException.class.getName())) {
-			mFragmentListener.onConnectionError();
+			mFragmentListener.onConnectionError(result);
 		}
 		else {
 			try {

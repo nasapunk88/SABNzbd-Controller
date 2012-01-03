@@ -110,9 +110,9 @@ public class RemoteFragment extends ListFragment {
 	}	
 	
 	/*
-     * Obtain all SABNzbd remote profiles from the local data store. Do this as a background task
-     * to avoid ANR dialogs.
-     */
+   * Obtain all SABNzbd remote profiles from the local data store. Do this as a background task
+   * to avoid ANR dialogs.
+   */
 	public void loadProfiles() {
 		new DatabaseTask(getActivity()).execute(LOAD_REMOTE);
 	}	

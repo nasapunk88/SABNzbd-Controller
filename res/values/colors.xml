@@ -5,8 +5,8 @@
     <color name="yellow">#fee50b</color>
     <color name="transparent">#00000000</color>
     <color name="white">#ffffff</color>
-    <color name="light_red">#F05656</color>
-    <color name="lime_green">#94F056</color>
+    <color name="light_red">#EBB5B5</color>
+    <color name="light_green">#C2EBB5</color>
     <color name="banana_yellow">#F5E256</color>
     
 </resources>

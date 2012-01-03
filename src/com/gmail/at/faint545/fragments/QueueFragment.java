@@ -112,7 +112,7 @@ public class QueueFragment extends ListFragment implements QueueActionTaskListen
 	};
 	
 	public interface QueueFragmentListener {
-		public void onConnectionError();
+		public void onConnectionError(String result);
 	}
 	
 	/*
@@ -337,7 +337,7 @@ public class QueueFragment extends ListFragment implements QueueActionTaskListen
 	@Override
 	public void onQueueDownloadFinished(String result) {		
 		if(result.equals(ClientProtocolException.class.getName()) || result.equals(IOException.class.getName())) {
-			mFragmentListener.onConnectionError();
+			mFragmentListener.onConnectionError(result);
 		}
 		else {
 			try {
@@ -358,7 +358,7 @@ public class QueueFragment extends ListFragment implements QueueActionTaskListen
 				}
 			} 
 			catch (JSONException e) {
-				mFragmentListener.onConnectionError();
+				mFragmentListener.onConnectionError(result);
 			}
 		}
 	}

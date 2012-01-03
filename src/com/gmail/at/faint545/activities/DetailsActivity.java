@@ -18,6 +18,9 @@ package com.gmail.at.faint545.activities;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -75,9 +78,9 @@ public class DetailsActivity extends FragmentActivity implements QueueFragmentLi
 	}
 	
 	/* A helper function to build an alert/error dialog */
-	private AlertDialog buildAlertDialog() {
+	private AlertDialog buildAlertDialog(String message) {
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		builder.setMessage(R.string.connect_error);
+		builder.setMessage(message);
 		builder.setCancelable(false);
 		builder.setNegativeButton(R.string.ok, new DialogInterface.OnClickListener() {			
 			@Override
@@ -87,17 +90,6 @@ public class DetailsActivity extends FragmentActivity implements QueueFragmentLi
 		});			
 		return builder.create();
 	}
-
-	@Override
-	public void onConnectionError() {
-		if(errorDialog == null) {
-			errorDialog = buildAlertDialog();
-		}
-		
-		if(!errorDialog.isShowing()) {
-			errorDialog.show();
-		}
-	}		
 
 	/* Tabs adapter subclass */	
 	public static class TabsAdapter extends FragmentPagerAdapter implements OnTabChangeListener, OnPageChangeListener {
@@ -170,6 +162,34 @@ public class DetailsActivity extends FragmentActivity implements QueueFragmentLi
 			((FragmentActivity) mWeakContext.get()).invalidateOptionsMenu();
 			int position = mTabHost.getCurrentTab();
 			mViewPager.setCurrentItem(position);
+		}
+	}
+
+	@Override
+	public void onConnectionError(String results) {
+		String error = null;
+		try {
+			JSONObject result = new JSONObject(results);
+			if(result.has("error")) {
+				error = getString(R.string.error_prefix) + result.getString("error");
+			}
+			else {
+				error = getString(R.string.connect_error);
+			}
+		}
+		catch(JSONException e) {
+			error = getString(R.string.connect_error);
+		}
+		
+		if(errorDialog == null) {
+			errorDialog = buildAlertDialog(error);
+		}
+		else {
+			errorDialog.setMessage(error);
+		}
+		
+		if(!errorDialog.isShowing()) {
+			errorDialog.show();
 		}
 	}
 }
