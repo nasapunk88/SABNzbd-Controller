@@ -35,17 +35,17 @@ import android.os.AsyncTask;
 import android.support.v4.app.Fragment;
 
 import com.gmail.at.faint545.SabnzbdConstants;
+import com.gmail.at.faint545.fragments.QueueFragment;
 
 public class QueueActionTask extends AsyncTask<String, Void, String> {
-	private ProgressDialog progressDialog;
 	private String url;
 	private String api;
 	private int request;
 	private Fragment fragment;
 	
-	public final static int DELETE = 0x11;
-	public final static int PAUSE = DELETE >> 1;
-	public final static int RESUME = PAUSE >> 1;
+	public final static int DELETE = QueueFragment.DELETE;
+	public final static int PAUSE = QueueFragment.PAUSE;
+	public final static int RESUME = QueueFragment.RESUME;
 	public final static int SPEEDLIMIT = RESUME >> 1;
 	
 	public interface QueueActionTaskListener {
@@ -57,28 +57,9 @@ public class QueueActionTask extends AsyncTask<String, Void, String> {
 	
 	public QueueActionTask(Fragment fragment,String url,String api,int request) {
 		this.fragment = fragment;
-		this.url = url;
 		this.request = request;
+		this.url = url;
 		this.api = api;
-	}
-	
-	@Override
-	protected void onPreExecute() {
-		switch(request) {
-			case DELETE:
-				progressDialog = ProgressDialog.show(fragment.getActivity(), null, "Deleting download(s)");
-			break;
-			case PAUSE:
-				progressDialog = ProgressDialog.show(fragment.getActivity(), null, "Pausing download(s)");
-			break;
-			case RESUME:
-				progressDialog = ProgressDialog.show(fragment.getActivity(), null, "Resuming download(s)");
-			break;
-			case SPEEDLIMIT:
-				progressDialog = ProgressDialog.show(fragment.getActivity(), null, "Setting speed limit");
-			break;
-		}
-		super.onPreExecute();
 	}
 
 	@Override
@@ -149,8 +130,6 @@ public class QueueActionTask extends AsyncTask<String, Void, String> {
 	}
 	
 	private void cleanup() {		
-		progressDialog.dismiss();
-		progressDialog = null;
 		fragment = null;
 		url = null;
 		api = null;

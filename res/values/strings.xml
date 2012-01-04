@@ -14,8 +14,6 @@
     <string name="qr_button_text">QR</string>
     <string name="empty_remote_queue">Your queue is empty. Start downloading!</string>
     <string name="empty_remote_history">Your history is empty!</string>
-    <string name="queue_tab_title">QUEUE</string>
-    <string name="history_tab_title">HISTORY</string>
     <string name="divide"> / </string>
     <string name="connect_error">There was an error. Please check both your connection and your SABNzbd settings.</string>
     <string name="error_prefix">There was an error: </string>
@@ -29,4 +27,13 @@
     <string name="edit">Edit</string>
     <string name="delete">Delete</string>
     <string name="autorefresh_interval">Refresh Interval</string>
+    
+    <!-- NewRemoteFragment -->
+    <string name="must_contain_char">Must contain characters</string>
+    <string name="must_contain_dig">Must contain numbers</string>
+    <string name="must_contain_char_no_space">Must contain characters &amp; no spaces</string>
+    
+    <!-- DetailsActivity -->
+    <string name="queue_title">QUEUE</string>
+    <string name="history_title">HISTORY</string>
 </resources>

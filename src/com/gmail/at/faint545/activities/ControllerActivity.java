@@ -15,83 +15,184 @@
  */
 package com.gmail.at.faint545.activities;
 
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+
+import android.app.Activity;
+import android.app.ListActivity;
 import android.content.Intent;
+import android.database.Cursor;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentTransaction;
+import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.widget.ListView;
+import android.widget.Toast;
 
 import com.bugsense.trace.BugSenseHandler;
 import com.gmail.at.faint545.R;
 import com.gmail.at.faint545.Remote;
-import com.gmail.at.faint545.fragments.NewRemoteFragment;
-import com.gmail.at.faint545.fragments.NewRemoteFragment.NewRemoteListener;
-import com.gmail.at.faint545.fragments.RemoteFragment;
-import com.gmail.at.faint545.fragments.RemoteFragment.RemoteFragmentListener;
-import com.gmail.at.faint545.zxing.IntentIntegrator;
-import com.gmail.at.faint545.zxing.IntentResult;
+import com.gmail.at.faint545.adapters.ControllerAdapter;
+import com.gmail.at.faint545.databases.RemoteDatabase;
 
-public class ControllerActivity extends FragmentActivity implements NewRemoteListener, RemoteFragmentListener {
-	private static final String REMOTE_FRAGMENT_TAG = "rf";
-	private static final String NEW_REMOTE_FRAGMENT_TAG = "nrf";
-	private RemoteFragment remoteFragment; // Fragment for viewing a remote
+public class ControllerActivity extends ListActivity {
+	private static ControllerAdapter mAdapter;
+	private static ListView mListView;
+	private static ArrayList<Remote> mRemotes = new ArrayList<Remote>();	
+
+	public 	static final int NEW_REMOTE = 0x88;
+	public 	static final int EDIT_REMOTE = NEW_REMOTE >> 2;
+	public 	static final int DELETE_REMOTE = EDIT_REMOTE >> 2;
+	public 	static final int LOAD_REMOTE = DELETE_REMOTE >> 2;
+	public 	static final int SET_SPEED_LIMIT = LOAD_REMOTE >> 2;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {    	
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.main);        
+		loadProfiles();
 		BugSenseHandler.setup(this, "42fc347a"); // Used for BugSense
-		setupActionBar();		
+		setContentView(R.layout.main);
+		setupListView();
+		setupListAdapter();
 	}
 
-	 /* A helper function to setup the Action Bar */
-	private void setupActionBar() {
-		getSupportActionBar().setDisplayShowTitleEnabled(false);
-		getSupportActionBar().setDisplayUseLogoEnabled(true);
-		
-		remoteFragment = RemoteFragment.newInstance();
-		getSupportFragmentManager().beginTransaction().add(R.id.main_framelayout, remoteFragment,REMOTE_FRAGMENT_TAG).commit(); // Attach RemoteFragment to this activity
+	/*
+	 * Obtain all SABNzbd remote profiles from the local data store. Do this as a background task
+	 * to avoid ANR dialogs.
+	 */
+	public void loadProfiles() {
+		new DatabaseTask(this).execute(LOAD_REMOTE);
+	}		
+
+	private void setupListView() {
+		mListView = getListView();		
+		mListView.setCacheColorHint(getResources().getColor(R.color.main_background)); // Optimization for ListView
+		registerForContextMenu(mListView); // Register this ListView to show a context menu
 	}
 
-	/* This function is called when a user edits a remote or creates a new one. */
-	public void launchNewRemoteFragment(Remote remote) {
-		FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-
-		/* Set custom transition animations */
-		ft.setCustomAnimations(R.anim.fragment_slide_left_enter, R.anim.fragment_slide_left_exit, R.anim.fragment_slide_right_enter, R.anim.fragment_slide_right_exit);
-
-		ft.replace(R.id.main_framelayout, NewRemoteFragment.newInstance(remote),NEW_REMOTE_FRAGMENT_TAG);
-		ft.addToBackStack(null);
-		ft.commit();
-	}
-
-	/* CALLBACK METHODS */
-
-	/* This function is called when a remote has been saved */
-	@Override
-	public void onRemoteSaved() {
-		remoteFragment.loadProfiles();
-		getSupportFragmentManager().popBackStack(); // Pop off the last saved state
+	/* A helper function to initialize the list adapter and set it */
+	private void setupListAdapter() {
+		mAdapter = new ControllerAdapter(this, R.layout.remote_row, mRemotes);
+		setListAdapter(mAdapter);
 	}	
 
-	/* This function is called when a user wants to edit a remote */
 	@Override
-	public void onEditRemote(Remote targetRemote) {
-		launchNewRemoteFragment(targetRemote);
+	public void onCreateContextMenu(ContextMenu menu, View v,ContextMenuInfo menuInfo) {
+		menu.add(Menu.NONE, EDIT_REMOTE, Menu.NONE, R.string.edit);
+		menu.add(Menu.NONE, DELETE_REMOTE, Menu.NONE, R.string.delete);
+		menu.add(Menu.NONE,SET_SPEED_LIMIT,Menu.NONE,"Set Speed Limit");
+		super.onCreateContextMenu(menu, v, menuInfo);
 	}
 
-	/* This function is called when a user want to add a remote */
 	@Override
-	public void onAddRemoteClicked() {
-		launchNewRemoteFragment(null);
+	public boolean onContextItemSelected(MenuItem item) {
+		AdapterContextMenuInfo menuInfo = (AdapterContextMenuInfo) item.getMenuInfo();
+		Remote selectedRemote = mRemotes.get(menuInfo.position);
+		switch(item.getItemId()) {
+			case EDIT_REMOTE:
+				Intent editIntent = new Intent(this,UpdateControllerActivity.class);
+				editIntent.putExtra("remote", mRemotes.get(menuInfo.position));
+				startActivityForResult(editIntent, EDIT_REMOTE);
+			break;
+			case DELETE_REMOTE:
+				new DatabaseTask(this).execute(DELETE_REMOTE,menuInfo.position);
+			break;
+			case SET_SPEED_LIMIT:
+				Intent speedLimitIntent = new Intent(this,SpeedLimitActivity.class);
+				speedLimitIntent.putExtra("remote", selectedRemote);
+				startActivity(speedLimitIntent);
+			break;
+		}
+		return super.onContextItemSelected(item);
+	}
+
+	@Override
+	public void onListItemClick(ListView l, View v, int position, long id) {
+		Intent detailsIntent = new Intent(this, DetailsActivity.class);
+		detailsIntent.putExtra("selected_remote", mRemotes.get(position));
+		startActivity(detailsIntent);
+		super.onListItemClick(l, v, position, id);
 	}
 	
-	/* We are handling the results from the QR scan here */
-	@Override
-	public void onActivityResult(int requestCode, int resultCode, Intent data) {
-		IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
-		if(result != null && result.getContents() != null) {
-			((NewRemoteFragment) getSupportFragmentManager().findFragmentByTag(NEW_REMOTE_FRAGMENT_TAG)).populateApiKey(result.getContents());
+	public void launchUpdateController(View v) {
+		startActivityForResult(new Intent(this,UpdateControllerActivity.class), NEW_REMOTE);
+	}
+
+	/*
+	 * A background task for deleting/loading remotes. This accepts integers
+	 * as parameters.
+	 */
+	private static class DatabaseTask extends AsyncTask<Integer, Void, Long> {
+		private WeakReference<Activity> mWeakContext;
+		private int request;
+		private int position;
+
+		public DatabaseTask(Activity context) {
+			mWeakContext = new WeakReference<Activity>(context);
 		}
+
+		@Override
+		protected Long doInBackground(Integer... params) {
+			request = params[0];
+			RemoteDatabase db = new RemoteDatabase(mWeakContext.get());
+			db.open();
+			long result = 0;
+			switch(request) {
+				case DELETE_REMOTE:
+					position = params[1];
+					result = db.delete(Integer.parseInt(mRemotes.get(position).getId()));
+					db.close();
+				break;
+				case LOAD_REMOTE:
+					Cursor cur = db.getAllRows();
+	
+					/* Move to the last profile position in the database if
+					 * a new profile has been added.
+					 */
+					if(mRemotes.size() < cur.getCount())
+						cur.moveToPosition(mRemotes.size()-1);
+					else
+						mRemotes.clear();
+	
+					while(cur.moveToNext()) { // Collect all columns from each row and process it
+						String id = cur.getString(RemoteDatabase.ID_INDEX);
+						String name = cur.getString(RemoteDatabase.NAME_INDEX);
+						String address = cur.getString(RemoteDatabase.ADDR_INDEX);
+						String port = cur.getString(RemoteDatabase.PORT_INDEX);
+						String apiKey = cur.getString(RemoteDatabase.API_KEY_INDEX);
+						long interval = cur.getLong(RemoteDatabase.REFRESH_INDEX);
+						mRemotes.add(new Remote(name).setAddress(address).setPort(port).setApiKey(apiKey).setId(id).setRefreshInterval(interval));
+					}					
+					cur.close();
+					db.close();
+				break;
+			}
+			return result;
+		}
+
+		@Override
+		protected void onPostExecute(Long result) {
+			switch(request) {
+			case DELETE_REMOTE:
+				if(result > 0) {
+					mRemotes.remove(position);
+					Toast.makeText(mWeakContext.get(), "Delete successful!", Toast.LENGTH_SHORT).show();
+				}
+				break;
+			}
+
+			if(mAdapter != null) mAdapter.notifyDataSetChanged();
+			super.onPostExecute(result);
+		}
+	}
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		if(resultCode != Activity.RESULT_CANCELED) new DatabaseTask(this).execute(LOAD_REMOTE);
 		super.onActivityResult(requestCode, resultCode, data);
-	}	
+	}
 }

@@ -30,20 +30,19 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 
-import android.app.ProgressDialog;
 import android.os.AsyncTask;
 import android.support.v4.app.Fragment;
 
 import com.gmail.at.faint545.SabnzbdConstants;
+import com.gmail.at.faint545.fragments.HistoryFragment;
 
 public class HistoryActionTask extends AsyncTask<String, Void, String> {
-	private ProgressDialog progressDialog;
 	private String url;
 	private String api;
 	private int request;
 	private Fragment fragment;
 	
-	public static final int DELETE = 0x345;
+	public static final int DELETE = HistoryFragment.DELETE;
 	public static final int RETRY = DELETE >> 1;
 	
 	public interface HistoryActionTaskListener {
@@ -56,19 +55,6 @@ public class HistoryActionTask extends AsyncTask<String, Void, String> {
 		this.url = url;
 		this.request = request;
 		this.api = api;
-	}
-	
-	@Override
-	protected void onPreExecute() {
-		switch(request) {
-			case DELETE:
-				progressDialog = ProgressDialog.show(fragment.getActivity(), null, "Deleting history");
-			break;
-			case RETRY:
-				progressDialog = ProgressDialog.show(fragment.getActivity(), null, "Attempting to retry");
-			break;
-		}
-		super.onPreExecute();
 	}
 
 	@Override
@@ -127,8 +113,6 @@ public class HistoryActionTask extends AsyncTask<String, Void, String> {
 	}
 
 	private void cleanup() {
-		progressDialog.dismiss();
-		progressDialog = null;
 		fragment = null;
 		url = null;
 		api = null;

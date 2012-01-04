@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
@@ -29,8 +28,6 @@ import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
-
-import android.app.ProgressDialog;
 import android.os.AsyncTask;
 import android.support.v4.app.Fragment;
 
@@ -41,17 +38,17 @@ public class HistoryDownloadTask extends AsyncTask<Void, Void, String> {
 	private Fragment mContext;
 	private String url;
 	private String api;
-	private Object mTargetView;
+	private PullToRefreshListView pullToRefresh;
 
 	public interface HistoryDownloadTaskListener {
 		public void onHistoryDownloadFinished(String result);
 	}
 
-	public HistoryDownloadTask(Fragment context,String url,String api,Object target) {
+	public HistoryDownloadTask(Fragment context,String url,String api,PullToRefreshListView usePTR) {
 		mContext = context;
 		this.url = url;
 		this.api = api;
-		mTargetView = target;
+		pullToRefresh = usePTR;
 	}
 
 	@Override
@@ -97,14 +94,11 @@ public class HistoryDownloadTask extends AsyncTask<Void, Void, String> {
 	}
 
 	private void cleanup() {
-		if(mTargetView instanceof PullToRefreshListView) {
-			((PullToRefreshListView) mTargetView).onRefreshComplete();
-		}
-		else if(mTargetView instanceof ProgressDialog) {
-			((ProgressDialog) mTargetView).dismiss();
+		if(pullToRefresh instanceof PullToRefreshListView) {
+			((PullToRefreshListView) pullToRefresh).onRefreshComplete();
 		}
 
-		mTargetView = null;		
+		pullToRefresh = null;		
 		mContext = null;
 		url = null;
 		api = null;

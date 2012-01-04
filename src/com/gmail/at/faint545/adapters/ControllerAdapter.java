@@ -27,12 +27,12 @@ import android.widget.TextView;
 import com.gmail.at.faint545.R;
 import com.gmail.at.faint545.Remote;
 
-public class RemoteFragmentAdapter extends ArrayAdapter<Remote> {
+public class ControllerAdapter extends ArrayAdapter<Remote> {
 	private ArrayList<Remote> remotes;
 	private Context mContext;
 	private int resourceId;
 
-	public RemoteFragmentAdapter(Context context, int resourceId, ArrayList<Remote> objects) {
+	public ControllerAdapter(Context context, int resourceId, ArrayList<Remote> objects) {
 		super(context, resourceId, objects);
 		this.resourceId = resourceId;
 		mContext = context;

@@ -25,10 +25,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.AlertDialog;
 import android.app.PendingIntent;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -38,10 +38,9 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.Messenger;
 import android.support.v4.app.ListFragment;
-import android.support.v4.app.SupportActivity;
-import android.support.v4.view.Menu;
-import android.support.v4.view.MenuItem;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewStub;
@@ -62,7 +61,7 @@ import com.gmail.at.faint545.tasks.QueueDownloadTask.QueueDownloadTaskListener;
 import com.handmark.pulltorefresh.library.PullToRefreshBase.OnRefreshListener;
 import com.handmark.pulltorefresh.library.PullToRefreshListView;
 
-public class QueueFragment extends ListFragment implements QueueActionTaskListener,QueueDownloadTaskListener {
+public class QueueFragment extends ListFragment implements QueueDownloadTaskListener,QueueActionTaskListener {
 	private RemoteQueueAdapter mAdapter;
 	private ArrayList<JSONObject> mJobs = new ArrayList<JSONObject>();
 	private ArrayList<Integer> mSelectedPositions = new ArrayList<Integer>();
@@ -71,6 +70,8 @@ public class QueueFragment extends ListFragment implements QueueActionTaskListen
 	private QueueFragmentListener mFragmentListener;
 	private Calendar updateTime;
 	private TextView timeLeft, globalSpeed;
+	private QueueDownloadTask downloadTask;
+	private boolean isDestroyed = false;
 	
 	public final static int DELETE = 0x321;
 	public final static int PAUSE = DELETE >> 1;
@@ -86,26 +87,26 @@ public class QueueFragment extends ListFragment implements QueueActionTaskListen
 		@Override
 		public void handleMessage(Message msg) {
 			String results = msg.getData().getString("results");
-			try {
-				JSONObject object = new JSONObject(results).getJSONObject(SabnzbdConstants.MODE_QUEUE);				
-				updateFooterView(object);
-				JSONArray array = object.getJSONArray(SabnzbdConstants.SLOTS);
-				
-				mJobs.clear();
-				for(int x = 0; x < array.length(); x++) {
-					mJobs.add(array.getJSONObject(x));
+			if(results != null && !isDestroyed) {
+				try {
+					JSONObject object = new JSONObject(results).getJSONObject(SabnzbdConstants.MODE_QUEUE);				
+					updateFooterView(object);
+					JSONArray array = object.getJSONArray(SabnzbdConstants.SLOTS);
+	
+					mJobs.clear();
+					for(int x = 0; x < array.length(); x++) {
+						mJobs.add(array.getJSONObject(x));
+					}
+	
+					if(mAdapter != null) {
+						mAdapter.notifyDataSetChanged();
+					}
+					
+					hideLoadingAnim();
 				}
-				
-				if(mAdapter != null) {
-					mAdapter.notifyDataSetChanged();
+				catch (JSONException e) {
+					e.printStackTrace();
 				}
-				
-				if(loadingStub.getVisibility() == View.VISIBLE) {
-					loadingStub.setVisibility(View.GONE);
-				}
-			}
-			catch (JSONException e) {
-				e.printStackTrace();
 			}
 			super.handleMessage(msg);
 		}		
@@ -115,9 +116,7 @@ public class QueueFragment extends ListFragment implements QueueActionTaskListen
 		public void onConnectionError(String result);
 	}
 	
-	/*
-	 * Default constructor
-	 */
+	/* Default constructor */
 	public static QueueFragment newInstance(Remote mRemote) {
 		QueueFragment self = new QueueFragment();
 		Bundle args = new Bundle();
@@ -127,7 +126,7 @@ public class QueueFragment extends ListFragment implements QueueActionTaskListen
 	}	
 	
 	@Override
-	public void onAttach(SupportActivity activity) {
+	public void onAttach(Activity activity) {
 		mFragmentListener = (QueueFragmentListener) activity;
 		super.onAttach(activity);
 	}
@@ -143,35 +142,76 @@ public class QueueFragment extends ListFragment implements QueueActionTaskListen
 		View view = inflater.inflate(R.layout.remote_queue, null);
 		mPtrView = (PullToRefreshListView) view.findViewById(R.id.remote_queue_ptr);
 		loadingStub = (ViewStub) view.findViewById(R.id.loading);
+		
+		mPtrView.setOnRefreshListener(new OnRefreshListener() {
+			@Override
+			public void onRefresh() {
+				downloadQueue(mPtrView);
+			}
+		});		
 		return view;
 	}
 		
 	@Override
-	public void onActivityCreated(Bundle savedInstanceState) {		
-		loadingStub.setVisibility(View.VISIBLE); // Make progress bar visible
+	public void onActivityCreated(Bundle savedInstanceState) {
+		refreshQueue();
 		setRecurringAlarm();
 		setupListView();
-		setupListAdapter();
-		initListeners();
 		super.onActivityCreated(savedInstanceState);
 	}
-
+	
+	private void refreshQueue() {
+		loadingStub.setVisibility(View.VISIBLE); // Make progress bar visible
+		getListView().setVisibility(View.GONE);
+		downloadQueue(null);
+	}
+	
+	/*
+	 * Set a recurring alarm to trigger a service to download the latest 
+	 * queue data. If user turned off auto refresh, just download the data
+	 * and don't set an alarm.
+	 */
+	private void setRecurringAlarm() {
+		if(getRemote().getRefreshInterval() != -1) {
+			updateTime = Calendar.getInstance();
+	    updateTime.setTimeZone(TimeZone.getTimeZone("GMT"));
+	    updateTime.set(Calendar.MINUTE, 1);
+	    
+			Intent downloader = new Intent(getActivity(), AlarmReciever.class);
+			downloader.putExtra("url", getRemote().buildURL());
+			downloader.putExtra("api", getRemote().getApiKey());
+			downloader.putExtra("messenger", new Messenger(handler));
+			
+			PendingIntent recurringDownload = PendingIntent.getBroadcast(getActivity(),0, downloader, PendingIntent.FLAG_CANCEL_CURRENT);
+			
+			AlarmManager alarms = (AlarmManager) getActivity().getSystemService(Context.ALARM_SERVICE); 
+			alarms.setInexactRepeating(AlarmManager.RTC_WAKEUP, updateTime.getTimeInMillis(),getRemote().getRefreshInterval(), recurringDownload);
+		}
+		else {
+			downloadQueue(null);
+		}
+	}	
+	
 	private void setupListView() {
 		getListView().setCacheColorHint(Color.TRANSPARENT); // Optimization for ListView
 		
 		// Attach a footer view
 		View footer = getActivity().getLayoutInflater().inflate(R.layout.remote_queue_footer, null);
 		getListView().addFooterView(footer);
+		
+		mAdapter = new RemoteQueueAdapter(getActivity(), R.layout.remote_queue_row, mJobs);
+		setListAdapter(mAdapter);		
 	}
 	
 	private void downloadQueue(Object viewToUse) {
-		new QueueDownloadTask(this, getRemote().buildURL(),getRemote().getApiKey(),viewToUse).execute();		
+		downloadTask = new QueueDownloadTask(this, getRemote().buildURL(),getRemote().getApiKey(),viewToUse);
+		downloadTask.execute();
 	}	
 	
 	@Override
 	public void onPrepareOptionsMenu(Menu menu) {
 		menu.clear();
-		// Only show these options if there are jobs to delete
+		/* Only show these options if there are jobs to delete */
 		if(mSelectedPositions.size() > 0 && mJobs.size() > 0) {
 			menu.add(Menu.NONE,DELETE,Menu.NONE,"Delete selected");
 			menu.add(Menu.NONE,PAUSE,Menu.NONE,"Pause selected");
@@ -188,29 +228,17 @@ public class QueueFragment extends ListFragment implements QueueActionTaskListen
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		Remote currentRemote = getActivity().getIntent().getParcelableExtra("selected_remote");
-		String selectedJobs = null;
-		if(mSelectedPositions.size() > 0) {
-			selectedJobs = collectSelectedItems();
-		}
-		switch(item.getItemId()) {
-			case DELETE:				
-				new QueueActionTask(this, currentRemote.buildURL(), currentRemote.getApiKey(),QueueActionTask.DELETE).execute(selectedJobs);			
-			break;
-			case PAUSE:
-				new QueueActionTask(this, currentRemote.buildURL(), currentRemote.getApiKey(),QueueActionTask.PAUSE).execute(selectedJobs);
-			break;
-			case RESUME:
-				new QueueActionTask(this, currentRemote.buildURL(), currentRemote.getApiKey(),QueueActionTask.RESUME).execute(selectedJobs);
-			break;
-		}
+		String selectedJobs = null;		
+		if(mSelectedPositions.size() > 0) selectedJobs = collectSelectedJobs();		
+		displayLoadingAnim();
+		new QueueActionTask(this, currentRemote.buildURL(), currentRemote.getApiKey(),item.getItemId()).execute(selectedJobs);
 		return super.onOptionsItemSelected(item);
 	}
 
-	private String collectSelectedItems() {
-		StringBuilder selectedJobs;
-		selectedJobs = new StringBuilder();
+	private String collectSelectedJobs() {
+		StringBuilder selectedJobs = new StringBuilder();
 		
-		// Create a string of jobs to delete, separated by commas i.e: job1,job2,job3
+		/* Create a string of jobs to delete, separated by commas i.e: job1,job2,job3 */
 		for(int position : mSelectedPositions) {				
 			JSONObject job = mJobs.get(position);
 			try {
@@ -221,7 +249,7 @@ public class QueueFragment extends ListFragment implements QueueActionTaskListen
 				e.printStackTrace();
 			}
 		}
-		return selectedJobs.substring(0, selectedJobs.lastIndexOf(","));
+		return selectedJobs.substring(0, selectedJobs.lastIndexOf(",")); // Chop off last comma
 	}
 
 	@Override
@@ -230,17 +258,15 @@ public class QueueFragment extends ListFragment implements QueueActionTaskListen
 			CheckBox checkbox = (CheckBox) v.findViewById(R.id.remote_queue_checkbox);
 			checkbox.toggle(); // Toggle the check box
 			
-			// Add or remove the current position from our list of selected positions
+			/* Add or remove the current position from our list of selected positions */
 			try {
 				if(checkbox.isChecked()) {
 					mJobs.get(position).put("checked", true);
 					mSelectedPositions.add(position);
-					mSelectedPositions.trimToSize();
 				}
 				else {
 					mJobs.get(position).put("checked", false);
 					mSelectedPositions.remove((Object) position);
-					mSelectedPositions.trimToSize();
 				}
 			}
 			catch(JSONException e) {
@@ -249,27 +275,7 @@ public class QueueFragment extends ListFragment implements QueueActionTaskListen
 		}
 		super.onListItemClick(l, v, position, id);
 	}
-
-	/*
-	 * Default implementation for initializing listeners for views
-	 */
-	private void initListeners() {
-		mPtrView.setOnRefreshListener(new OnRefreshListener() {
-			@Override
-			public void onRefresh() {
-				downloadQueue(mPtrView);
-			}
-		});
-	}
-
-	/*
-	 * A helper function to setup the list adapter
-	 */	
-	private void setupListAdapter() {
-		mAdapter = new RemoteQueueAdapter(getActivity(), R.layout.remote_queue_row, mJobs);
-		setListAdapter(mAdapter);
-	}
-
+	
 	private void updateFooterView(JSONObject object) throws JSONException {
 		if(timeLeft == null) {
 			timeLeft = (TextView) getView().findViewById(R.id.remote_queue_timeleft);
@@ -299,10 +305,11 @@ public class QueueFragment extends ListFragment implements QueueActionTaskListen
 	}
 	
 	private void validateResults(String result) {
+		hideLoadingAnim();
 		try {
 			String status = new JSONObject(result).getString(SabnzbdConstants.STATUS);
 			if(Boolean.parseBoolean(status)){
-				downloadQueue(ProgressDialog.show(getActivity(), null, "Loading data"));
+				refreshQueue();
 				mSelectedPositions.clear();
 			}
 			else {
@@ -335,7 +342,8 @@ public class QueueFragment extends ListFragment implements QueueActionTaskListen
 	}
 
 	@Override
-	public void onQueueDownloadFinished(String result) {		
+	public void onQueueDownloadFinished(String result) {
+		hideLoadingAnim();		
 		if(result.equals(ClientProtocolException.class.getName()) || result.equals(IOException.class.getName())) {
 			mFragmentListener.onConnectionError(result);
 		}
@@ -352,10 +360,6 @@ public class QueueFragment extends ListFragment implements QueueActionTaskListen
 				if(mAdapter != null) {
 					mAdapter.notifyDataSetChanged();
 				}
-				
-				if(loadingStub.getVisibility() == View.VISIBLE) {
-					loadingStub.setVisibility(View.GONE); // Hide progressbar
-				}
 			} 
 			catch (JSONException e) {
 				mFragmentListener.onConnectionError(result);
@@ -363,29 +367,20 @@ public class QueueFragment extends ListFragment implements QueueActionTaskListen
 		}
 	}
 	
-	/*
-	 * Set a recurring alarm to trigger a service to download the latest 
-	 * queue data. If user turned off auto refresh, just download the data
-	 * and don't set an alarm.
-	 */
-	private void setRecurringAlarm() {
-		if(getRemote().getRefreshInterval() != -1) {
-			updateTime = Calendar.getInstance();
-	    updateTime.setTimeZone(TimeZone.getTimeZone("GMT"));
-	    updateTime.set(Calendar.MINUTE, 1);
-	    
-			Intent downloader = new Intent(getActivity(), AlarmReciever.class);
-			downloader.putExtra("url", getRemote().buildURL());
-			downloader.putExtra("api", getRemote().getApiKey());
-			downloader.putExtra("messenger", new Messenger(handler));
-			
-			PendingIntent recurringDownload = PendingIntent.getBroadcast(getActivity(),0, downloader, PendingIntent.FLAG_CANCEL_CURRENT);
-			
-			AlarmManager alarms = (AlarmManager) getActivity().getSystemService(Context.ALARM_SERVICE); 
-			alarms.setInexactRepeating(AlarmManager.RTC_WAKEUP, updateTime.getTimeInMillis(),getRemote().getRefreshInterval(), recurringDownload);
-		}
-		else {
-			downloadQueue(null);
-		}
+	private void displayLoadingAnim() {
+		getListView().setVisibility(View.GONE);
+		loadingStub.setVisibility(View.VISIBLE);
+	}
+	
+	private void hideLoadingAnim() {
+		getListView().setVisibility(View.VISIBLE);
+		loadingStub.setVisibility(View.GONE);
+	}	
+
+	@Override
+	public void onDestroy() {
+		isDestroyed = true;
+		if(downloadTask != null) downloadTask.cancel(true);
+		super.onDestroy();
 	}
 }

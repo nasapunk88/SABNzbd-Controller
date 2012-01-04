@@ -23,16 +23,15 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
-import android.support.v4.app.SupportActivity;
-import android.support.v4.view.Menu;
-import android.support.v4.view.MenuItem;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewStub;
@@ -75,7 +74,7 @@ public class HistoryFragment extends ListFragment implements HistoryActionTaskLi
 	}
 	
 	@Override
-	public void onAttach(SupportActivity activity) {
+	public void onAttach(Activity activity) {
 		mFragmentListener = (HistoryFragmentListener) activity;
 		super.onAttach(activity);
 	}
@@ -91,27 +90,34 @@ public class HistoryFragment extends ListFragment implements HistoryActionTaskLi
 		View view = inflater.inflate(R.layout.remote_history, null);
 		mPtrView = (PullToRefreshListView) view.findViewById(R.id.remote_history_ptr);
 		loadingStub = (ViewStub) view.findViewById(R.id.loading);
+		
+		mPtrView.setOnRefreshListener(new OnRefreshListener() {
+			@Override
+			public void onRefresh() {
+				manualRefreshHistory(mPtrView);
+			}			
+		});		
 		return view;
 	}
 
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
-		loadingStub.setVisibility(View.VISIBLE); // Make progressbar visible
-		downloadHistory(null); // Begin downloading
+		refreshHistory(); // Begin downloading
 		getListView().setCacheColorHint(Color.TRANSPARENT); // Optimization for ListView
 		setupListAdapter();
-		initListeners();
 		super.onActivityCreated(savedInstanceState);
 	}
 	
-	/*
-	 * A function to trigger a history download. If a PullToRefreshListView
-	 * is passed through, this indicates that we are going to use the
-	 * PullToRefreshListView to show a loading message.
-	 */
-	private void downloadHistory(Object target) {
+	/* A function to trigger an automatic history download. */
+	private void refreshHistory() {
+		displayLoadingAnim();
 		mOldJobs.clear();
-		new HistoryDownloadTask(this, getRemote().buildURL(), getRemote().getApiKey(),target).execute();
+		new HistoryDownloadTask(this, getRemote().buildURL(), getRemote().getApiKey(),null).execute();
+	}
+	
+	private void manualRefreshHistory(PullToRefreshListView view) {
+		mOldJobs.clear();
+		new HistoryDownloadTask(this, getRemote().buildURL(), getRemote().getApiKey(),view).execute();
 	}
 
 	/* A helper function to setup the list adapter */
@@ -119,16 +125,6 @@ public class HistoryFragment extends ListFragment implements HistoryActionTaskLi
 		mAdapter = new RemoteHistoryAdapter(getActivity(), R.layout.remote_history_row, mOldJobs);
 		setListAdapter(mAdapter);
 	}	
-	
-	/* Default implementation for initializing listeners for views */
-	private void initListeners() {
-		mPtrView.setOnRefreshListener(new OnRefreshListener() {
-			@Override
-			public void onRefresh() {
-				downloadHistory(mPtrView);
-			}			
-		});
-	}
 	
 	@Override
 	public void onPrepareOptionsMenu(Menu menu) {
@@ -145,23 +141,18 @@ public class HistoryFragment extends ListFragment implements HistoryActionTaskLi
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
+		Remote currentRemote = getActivity().getIntent().getParcelableExtra("selected_remote");
 		String selectedJobs = null;
-		if(mSelectedPositions.size() > 0) {
-			selectedJobs = collectSelectedItems();
-		}
-		switch(item.getItemId()) {
-			case DELETE:
-				deleteHistory(selectedJobs);
-			break;
-		}
+		if(mSelectedPositions.size() > 0) selectedJobs = collectSelectedItems();
+		displayLoadingAnim();
+		new HistoryActionTask(this, currentRemote.buildURL(), currentRemote.getApiKey(),item.getItemId()).execute(selectedJobs);		
 		return super.onOptionsItemSelected(item);
 	}
 	
 	/* A helper function to collect all the NZO IDs of all selected items/jobs */
 	private String collectSelectedItems() {
-		StringBuilder selectedJobs;
-		selectedJobs = new StringBuilder();
-		// Create a string of jobs to delete, separated by commas i.e: job1,job2,job3
+		StringBuilder selectedJobs = new StringBuilder();
+		/* Create a string of jobs to delete, separated by commas i.e: job1,job2,job3 */
 		for(int position : mSelectedPositions) {				
 			JSONObject job = mOldJobs.get(position);
 			try {
@@ -214,12 +205,16 @@ public class HistoryFragment extends ListFragment implements HistoryActionTaskLi
 	private Remote getRemote() {
 		return getArguments().getParcelable("remote");
 	}	
+
+	private void displayLoadingAnim() {
+		getListView().setVisibility(View.GONE);
+		loadingStub.setVisibility(View.VISIBLE);
+	}
 	
-	/* A function for when a user selects to delete a specific or all jobs. Refers to: RemoteHistoryFragment.java */
-	public void deleteHistory(String selectedJobs) {
-		Remote currentRemote = getActivity().getIntent().getParcelableExtra("selected_remote");
-		new HistoryActionTask(this, currentRemote.buildURL(), currentRemote.getApiKey(),HistoryActionTask.DELETE).execute(selectedJobs);
-	}	
+	private void hideLoadingAnim() {
+		getListView().setVisibility(View.VISIBLE);
+		loadingStub.setVisibility(View.GONE);
+	}		
 
 	/* CALLBACK METHODS */
 	
@@ -231,7 +226,7 @@ public class HistoryFragment extends ListFragment implements HistoryActionTaskLi
 		try {
 			String status = new JSONObject(result).getString(SabnzbdConstants.STATUS);
 			if(Boolean.parseBoolean(status)) {
-				downloadHistory(ProgressDialog.show(getActivity(), null, "Loading data"));
+				refreshHistory();
 				mSelectedPositions.clear();
 			}
 			else {
@@ -246,12 +241,11 @@ public class HistoryFragment extends ListFragment implements HistoryActionTaskLi
 	}
 	
 	@Override
-	public void onHistoryRetryFinished(String result) {
-		// TODO Auto-generated method stub		
-	}
+	public void onHistoryRetryFinished(String result) {}
 
 	@Override
 	public void onHistoryDownloadFinished(String result) {
+		hideLoadingAnim();
 		if(result.equals(ClientProtocolException.class.getName()) || result.equals(IOException.class.getName())) {
 			mFragmentListener.onConnectionError(result);
 		}
@@ -267,9 +261,7 @@ public class HistoryFragment extends ListFragment implements HistoryActionTaskLi
 				
 				if(mAdapter != null) {
 					mAdapter.notifyDataSetChanged();
-				}
-				
-				loadingStub.setVisibility(View.GONE); // Hide progressbar				
+				}						
 			}
 			catch(JSONException e) {
 				e.printStackTrace();

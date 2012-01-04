@@ -31,8 +31,11 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnDismissListener;
 import android.os.AsyncTask;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 
 import com.gmail.at.faint545.SabnzbdConstants;
 import com.handmark.pulltorefresh.library.PullToRefreshListView;
@@ -89,13 +92,13 @@ public class QueueDownloadTask extends AsyncTask<Void, Void, String> {
 	}
 
 	@Override
-	protected void onPostExecute(String result) {
+	protected void onPostExecute(String result) {		
 		QueueDownloadTaskListener listener = (QueueDownloadTaskListener) mContext;
 		cleanup();
-		listener.onQueueDownloadFinished(result);		
+		listener.onQueueDownloadFinished(result);
 		super.onPostExecute(result);
 	}
-
+	
 	private void cleanup() {
 		if(mTargetView instanceof PullToRefreshListView) {			
 			((PullToRefreshListView) mTargetView).onRefreshComplete();
